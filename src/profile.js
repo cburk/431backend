@@ -1,8 +1,15 @@
-let hLines = {headlines: [{username: 'uname', headline: 'headline'}, {username: 'me', headline: 'stuff'}]}
-let avatars = {avatars: [{username: 'uname', avatar: 'avatar'}, {username: 'me', avatar: 'avatar2'}]}
+let loggedInProfile = {
+	username: 'Christian Hardcoded',
+	headline: 'Logged in headline',
+	email: 'logged@in.com',
+	zipcode: 12345,
+	avatar: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/DWLeebron.jpg/220px-DWLeebron.jpg'
+}
 
-let zips = [{username: 'a', zipcode: 'b'}, {username: 'me', zipcode: '12345'}]
-let emails = [{username: 'a', email: 'b'}, {username: 'me', email: '12345'}]
+let hLines = {headlines: [{username: 'uname', headline: 'headline'}, {username: 'p2', headline: 'stuff'}]}
+let avatars = {avatars: [{username: 'uname', avatar: 'avatar'}, {username: 'p2', avatar: 'avatar2'}]}
+let zips = [{username: 'a', zipcode: 'b'}, {username: 'p2', zipcode: '12345'}]
+let emails = [{username: 'a', email: 'b'}, {username: 'p2', email: '12345'}]
 
 const headlines = (req, res) => {
 	console.log('headline params')
@@ -15,14 +22,25 @@ const headlines = (req, res) => {
 	console.log("Finished")
 }
 const headline = (req, res) => {
-	console.log("this stuff")
-	console.log(req)
-	console.log(req.body)
-	console.log(req.body.headline)
-	console.log(req.params)
+	//console.log("this stuff")
+	//console.log(req)
+	//console.log(req.body)
+	//console.log(req.body.headline)
+	//console.log(req.params)
+
+	// Update local profile
+	console.log("Setting headline, before: ", loggedInProfile)
+	loggedInProfile.headline = req.body.headline
+	console.log("Setting headline, after: ", loggedInProfile)
+
+	// Update headlines list
 	let newHeadline = req.body
-	newHeadline.username = 'stuff'
+	newHeadline.username = loggedInProfile.username
+	console.log("New headlin: ", newHeadline)
+	console.log("All headlines before: ", hLines)
+	hLines.headlines = hLines.headlines.filter((x)=>{return x.username != loggedInProfile.username})
 	hLines.headlines.push(newHeadline)
+	console.log("All headlines before: ", hLines)
 	res.send(newHeadline)
 }
 
