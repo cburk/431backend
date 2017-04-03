@@ -8,8 +8,8 @@ const loggedInProfile = {
 
 let hLines = {headlines: [{username: 'uname', headline: 'headline'}, {username: 'p2', headline: 'stuff'}, {username: 'Christian Hardcoded', headline: 'Logged in headline'}]}
 let avatars = {avatars: [{username: 'uname', avatar: 'avatar'}, {username: 'p2', avatar: 'avatar2'}, {username: 'Christian Hardcoded', avatar: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/DWLeebron.jpg/220px-DWLeebron.jpg'}]}
-let zips = [{username: 'a', zipcode: 23456}, {username: 'p2', zipcode: 78901}, {username: 'Christian Hardcoded', zipcode: 12345}]
-let emails = [{username: 'a', email: 'b'}, {username: 'p2', email: '12345'},  {username: 'Christian Hardcoded', email: 'logged@in.com'}]
+let zips = [{username: 'uname', zipcode: 23456}, {username: 'p2', zipcode: 78901}, {username: 'Christian Hardcoded', zipcode: 12345}]
+let emails = [{username: 'uname', email: 'b@c.com'}, {username: 'p2', email: 'p@2.c'},  {username: 'Christian Hardcoded', email: 'logged@in.com'}]
 
 const headlines = (req, res) => {
 	// Correct behavior: W/ no arguments, return headline of logged in user, otherwise return for all users mentioned
@@ -23,60 +23,51 @@ const headlines = (req, res) => {
 	res.send({headlines: userHeadlines})
 }
 const headline = (req, res) => {
-	//console.log("this stuff")
-	//console.log(req)
-	//console.log(req.body)
-	//console.log(req.body.headline)
-	//console.log(req.params)
-
 	// Update local profile
-	console.log("Setting headline, before: ", loggedInProfile)
 	loggedInProfile.headline = req.body.headline
-	console.log("Setting headline, after: ", loggedInProfile)
 
 	// Update headlines list
 	let newHeadline = req.body
 	newHeadline.username = loggedInProfile.username
-	console.log("New headlin: ", newHeadline)
-	console.log("All headlines before: ", hLines)
 	hLines.headlines = hLines.headlines.filter((x)=>{return x.username != loggedInProfile.username})
 	hLines.headlines.push(newHeadline)
-	console.log("All headlines before: ", hLines)
 	res.send(newHeadline)
 }
 
 const getEmail = (req, res) => {
+	//If not mentioned, return email for logged in user
 	if(req.params.user==undefined){
-                res.send(emails[0])
+                res.send({username: loggedInProfile.username, email: loggedInProfile.email})
         }else{
                 res.send(emails.filter((a) => {return a.username == req.params.user})[0])
         }
 }
 
 const putEmail = (req, res) => {
-	let newHeadline = req.body
-	newHeadline.username = 'stuff'
-	emails.push(newHeadline)
-	res.send(newHeadline)
+	let newEmail = req.body
+	newEmail.username = loggedInProfile.username
+	loggedInProfile.email = newEmail.email
+
+        emails = emails.filter((x)=>{return x.username != loggedInProfile.username})
+	emails.push(newEmail)
+	res.send(newEmail)
 }
 const getZip = (req, res) => {
-	if(req.params.user==undefined){
-		console.log('step 1')
-                res.send(zips[0])
+        if(req.params.user==undefined){
+                res.send({username: loggedInProfile.username, zipcode: loggedInProfile.zipcode})
         }else{
-		console.log('step 2')
-		console.log(req.params.user)
-		zips.map((a)=>console.log(a.username))
-		console.log(zips.filter((a) => {return a.username == req.params.user}))
                 res.send(zips.filter((a) => {return a.username == req.params.user})[0])
         }
 }
 
 const putZip = (req, res) => {
-	let newHeadline = req.body
-	newHeadline.username = 'stuff'
-	zips.push(newHeadline)
-	res.send(newHeadline)
+        let newZip = req.body
+        newZip.username = loggedInProfile.username
+        loggedInProfile.zipcode = newZip.zipcode
+
+        zips = zips.filter((x)=>{return x.username != loggedInProfile.username})
+        zips.push(newZip)
+        res.send(newZip)
 }
 
 const avatarsF = (req, res) => {
