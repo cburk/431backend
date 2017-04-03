@@ -7,7 +7,7 @@ const loggedInProfile = {
 }
 
 let hLines = {headlines: [{username: 'uname', headline: 'headline'}, {username: 'p2', headline: 'stuff'}, {username: 'Christian Hardcoded', headline: 'Logged in headline'}]}
-let avatars = {avatars: [{username: 'uname', avatar: 'avatar'}, {username: 'p2', avatar: 'avatar2'}, {username: 'Christian Hardcoded', avatar: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/DWLeebron.jpg/220px-DWLeebron.jpg'}]}
+let avatars = [{username: 'uname', avatar: 'avatar'}, {username: 'p2', avatar: 'avatar2'}, {username: 'Christian Hardcoded', avatar: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/DWLeebron.jpg/220px-DWLeebron.jpg'}]
 let zips = [{username: 'uname', zipcode: 23456}, {username: 'p2', zipcode: 78901}, {username: 'Christian Hardcoded', zipcode: 12345}]
 let emails = [{username: 'uname', email: 'b@c.com'}, {username: 'p2', email: 'p@2.c'},  {username: 'Christian Hardcoded', email: 'logged@in.com'}]
 
@@ -71,18 +71,21 @@ const putZip = (req, res) => {
 }
 
 const avatarsF = (req, res) => {
-	if(req.params.user==undefined)
-		res.send(avatars)
-	else{
-		res.send({avatars: avatars.avatars.filter((hL)=>{return hL.username == req.params.user})})
-	}
+        if(req.params.user==undefined){
+                res.send({username: loggedInProfile.username, avatar: loggedInProfile.avatar})
+        }else{
+                res.send(avatars.filter((a) => {return a.username == req.params.user})[0])
+        }
 }
 
 const avatarF = (req, res) => {
-	let newHeadline = req.body
-	newHeadline.username = 'stuff'
-	hLines.headlines.push(newHeadline)
-	res.send(newHeadline)
+        let newAvatar = req.body
+        newAvatar.username = loggedInProfile.username
+        loggedInProfile.avatar = newAvatar.avatar
+
+        avatars = avatars.filter((x)=>{return x.username != loggedInProfile.username})
+        avatars.push(newAvatar)
+        res.send(newAvatar)
 }
 
 module.exports = app => {
