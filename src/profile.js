@@ -1,4 +1,4 @@
-let loggedInProfile = {
+const loggedInProfile = {
 	username: 'Christian Hardcoded',
 	headline: 'Logged in headline',
 	email: 'logged@in.com',
@@ -6,20 +6,21 @@ let loggedInProfile = {
 	avatar: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/DWLeebron.jpg/220px-DWLeebron.jpg'
 }
 
-let hLines = {headlines: [{username: 'uname', headline: 'headline'}, {username: 'p2', headline: 'stuff'}]}
-let avatars = {avatars: [{username: 'uname', avatar: 'avatar'}, {username: 'p2', avatar: 'avatar2'}]}
-let zips = [{username: 'a', zipcode: 'b'}, {username: 'p2', zipcode: '12345'}]
-let emails = [{username: 'a', email: 'b'}, {username: 'p2', email: '12345'}]
+let hLines = {headlines: [{username: 'uname', headline: 'headline'}, {username: 'p2', headline: 'stuff'}, {username: 'Christian Hardcoded', headline: 'Logged in headline'}]}
+let avatars = {avatars: [{username: 'uname', avatar: 'avatar'}, {username: 'p2', avatar: 'avatar2'}, {username: 'Christian Hardcoded', avatar: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/DWLeebron.jpg/220px-DWLeebron.jpg'}]}
+let zips = [{username: 'a', zipcode: 23456}, {username: 'p2', zipcode: 78901}, {username: 'Christian Hardcoded', zipcode: 12345}]
+let emails = [{username: 'a', email: 'b'}, {username: 'p2', email: '12345'},  {username: 'Christian Hardcoded', email: 'logged@in.com'}]
 
 const headlines = (req, res) => {
-	console.log('headline params')
-	console.log(req.params)
-	if(req.params.user==undefined)
-		res.send(hLines)
-	else{
-		res.send({headlines: hLines.headlines.filter((hL)=>{return hL.username == req.params.user})})
-	}
-	console.log("Finished")
+	// Correct behavior: W/ no arguments, return headline of logged in user, otherwise return for all users mentioned
+	// If no users specified, just return headlines for logged in
+	const users = req.params.user ? req.params.user.split(',') : [loggedInProfile.username]
+	//If some of the people weren't in headlines originally, null results, filter these out
+	const usersFiltered = users.filter((usr)=>{return hLines.headlines.filter(hline=>{return hline.username==usr}).length>0})
+	const userHeadlines = usersFiltered.map((usr) => {return hLines.headlines.filter(hLine=>{return hLine.username==usr})[0]}, [])
+
+	console.log(userHeadlines)
+	res.send({headlines: userHeadlines})
 }
 const headline = (req, res) => {
 	//console.log("this stuff")
