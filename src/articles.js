@@ -4,6 +4,10 @@ const bodyParser = require('body-parser')
 let articles = [{id: 1, author: 'Dude', text: 'stuff'},{id: 2, author: 'Dude2', text: 'stuff2'},{id: 3, author: 'Dude3', text: 'stuff3'}]
 
 const currentUser = 'Christian Hardcoded'
+const allArticles = [{_id: 5, author: currentUser, text: 'art 5', date: new Date(), comments: []},
+                    {_id: 6, author: currentUser, text: 'art 6!', date: new Date(), comments: []},
+                    {_id: 7, author: currentUser, text: 'art 7', date: new Date(), comments: []},
+                    {_id: 2, author: 'someone else', text: 'A different art', date: new Date(), comments: []}]
 const userArticles = [{_id: 5, author: currentUser, text: 'art 5', date: new Date(), comments: []},
                     {_id: 6, author: currentUser, text: 'art 6!', date: new Date(), comments: []},
                     {_id: 7, author: currentUser, text: 'art 7', date: new Date(), comments: []}]
@@ -15,6 +19,7 @@ const postArticle = (req, res) => {
     const newArticle = {author: currentUser, _id: nextArticleNum, text: req.body.text, date: new Date(), comments: []}
     nextArticleNum += 1
     userArticles.push(newArticle)
+    allArticles.push(newArticle)
     res.send({articles: userArticles})
 }
 
@@ -23,15 +28,11 @@ const putArticle = (req, res) => {
 }
 
 const getArticles = (req, res) => {
-     console.log('Payload received', req.body)
-	console.log(req.params)
 	if(req.params.id==undefined){
-	     res.send(articles)
-		console.log("empty case")
+	     res.send({articles: userArticles})
 	}
 	else{
-		//console.log()
-		res.send(articles.filter((art) => {return art.id == req.params.id}))
+		res.send({articles: allArticles.filter((art) => {return art._id == req.params.id || art.author == req.params.id})})
 	}
 }
 
