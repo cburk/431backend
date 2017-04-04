@@ -75,11 +75,16 @@ const login = (req, res) => {
 	res.send({username, result: 'success'})
 }
 
+const password = (req, res) => {
+     res.send({username: 'Christian Hardcoded', status: 'will not change'})
+}
+
 module.exports = app => {
 	app.post('/article', addArticle),
 	app.get('/articles/:id?', getArticles),
 	app.post('/register', register),
 	app.post('/login', login)
+	app.put('/password', password)
 }
 
 
@@ -90,6 +95,7 @@ app.post('/article', addArticle)
 app.get('/articles/:id?', getArticles)
 app.post('/register', register)
 app.post('/login', login)
+app.put('/password', password)
 
 // Get the port from the environment, i.e., Heroku sets it
 const port = process.env.PORT || 3000
