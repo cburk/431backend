@@ -1,18 +1,25 @@
 const express = require('express')
 const bodyParser = require('body-parser')
 
-let nextArticleNum = 4
 let articles = [{id: 1, author: 'Dude', text: 'stuff'},{id: 2, author: 'Dude2', text: 'stuff2'},{id: 3, author: 'Dude3', text: 'stuff3'}]
 
-const addArticle = (req, res) => {
-     console.log('add articel, Payload received', req.body)
-     let newArticle = {id: nextArticleNum}
-     newArticle.author = req.body.author
-     newArticle.text = req.body.text
-     articles.push(newArticle)
-     nextArticleNum += 1
-	console.log(articles)
-     res.send(newArticle)
+const currentUser = 'Christian Hardcoded'
+const userArticles = [{_id: 5, author: currentUser, text: 'art 5', date: new Date(), comments: []},
+                    {_id: 6, author: currentUser, text: 'art 6!', date: new Date(), comments: []},
+                    {_id: 7, author: currentUser, text: 'art 7', date: new Date(), comments: []}]
+let nextArticleNum = 8
+
+const postArticle = (req, res) => {
+    //TODO: Add image if there
+    console.log("Should be new?")
+    const newArticle = {author: currentUser, _id: nextArticleNum, text: req.body.text, date: new Date(), comments: []}
+    nextArticleNum += 1
+    userArticles.push(newArticle)
+    res.send({articles: userArticles})
+}
+
+const putArticle = (req, res) => {
+
 }
 
 const getArticles = (req, res) => {
@@ -29,7 +36,8 @@ const getArticles = (req, res) => {
 }
 
 module.exports = app => {
-	app.post('/article', addArticle),
+	app.post('/article', postArticle),
+    app.put('/articles/:id', putArticle),
 	app.get('/articles/:id?', getArticles)
 }
 /*

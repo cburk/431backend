@@ -11,30 +11,6 @@ let nextArticleNum = 4
 let articles = [{id: 1, author: 'Dude', text: 'stuff'},{id: 2, author: 'Dude2', text: 'stuff2'},{id: 3, author: 'Dude3', text: 'stuff3'}]
 let uRecords = {}
 
-const addArticle = (req, res) => {
-     console.log('add articel, Payload received', req.body)
-     let newArticle = {id: nextArticleNum}
-     newArticle.author = req.body.author
-     newArticle.text = req.body.text
-     articles.push(newArticle)
-     nextArticleNum += 1
-	console.log(articles)
-     res.send(newArticle)
-}
-
-const getArticles = (req, res) => {
-     console.log('Payload received', req.body)
-	console.log(req.params)
-	if(req.params.id==undefined){
-	     res.send(articles)
-		console.log("empty case")
-	}
-	else{
-		//console.log()
-		res.send(articles.filter((art) => {return art.id == req.params.id}))
-	}
-}
-
 const register = (req, res) => {
      console.log('register, Payload received', req.body)
      const password = req.body.password
@@ -80,8 +56,8 @@ const password = (req, res) => {
 }
 
 module.exports = app => {
-	app.post('/article', addArticle),
-	app.get('/articles/:id?', getArticles),
+	//app.post('/article', addArticle),
+	//app.get('/articles/:id?', getArticles),
 	app.post('/register', register),
 	app.post('/login', login)
 	app.put('/password', password)

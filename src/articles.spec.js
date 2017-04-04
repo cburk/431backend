@@ -7,7 +7,7 @@ const fetch = require('isomorphic-fetch')
 const url = path => `http://localhost:3000${path}`
 
 describe('Validate Article functionality', () => {
-
+	/*
 	it('should give me three or more articles', (done) => {
 		// IMPLEMENT ME
 		fetch(url("/articles"))
@@ -112,5 +112,5 @@ describe('Validate Article functionality', () => {
 
 		//done(new Error('Not implemented'))
 	}, 200)
-
+	*/
 });
