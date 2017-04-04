@@ -22,7 +22,7 @@ describe('Validate Profile functionality', () => {
                 .then(body => {
 			expect(JSON.parse(body).username).to.eql(testUsername)
 			expect(JSON.parse(body).headline).to.eql(newHeadline.headline)
-                }).catch(done)
+                })
 		.then(body => {
 			// Verify headline was updated with a get request
 			fetch(url("/headlines"))
