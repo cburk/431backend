@@ -35,13 +35,12 @@ const headline = (req, res) => {
 	res.send(newHeadline)
 }
 
-/*
 const getEmail = (req, res) => {
 	//If not mentioned, return email for logged in user
 	if(req.params.user==undefined){
                 res.send({username: loggedInProfile.username, email: loggedInProfile.email})
         }else{
-                res.send(emails.filter((a) => {return a.username == req.params.user})[0])
+                res.send({username: req.params.user, email: 'stubbed@email.com'})
         }
 }
 
@@ -49,16 +48,14 @@ const putEmail = (req, res) => {
 	let newEmail = req.body
 	newEmail.username = loggedInProfile.username
 	loggedInProfile.email = newEmail.email
-
-        emails = emails.filter((x)=>{return x.username != loggedInProfile.username})
-	emails.push(newEmail)
 	res.send(newEmail)
 }
+
 const getZip = (req, res) => {
         if(req.params.user==undefined){
                 res.send({username: loggedInProfile.username, zipcode: loggedInProfile.zipcode})
         }else{
-                res.send(zips.filter((a) => {return a.username == req.params.user})[0])
+                res.send({username: req.params.user, zipcode: '12345'})
         }
 }
 
@@ -66,36 +63,31 @@ const putZip = (req, res) => {
         let newZip = req.body
         newZip.username = loggedInProfile.username
         loggedInProfile.zipcode = newZip.zipcode
-
-        zips = zips.filter((x)=>{return x.username != loggedInProfile.username})
-        zips.push(newZip)
         res.send(newZip)
 }
 
 const avatarsF = (req, res) => {
-        if(req.params.user==undefined){
-                res.send({username: loggedInProfile.username, avatar: loggedInProfile.avatar})
-        }else{
-                res.send(avatars.filter((a) => {return a.username == req.params.user})[0])
-        }
+	const users = req.params.user ? req.params.user.split(',') : [loggedInProfile.username]
+	
+    //Current correct behavior: If user not logged in user, return a generic response
+    //Otherwise, return current user's headline
+    const usersAvatars = users.map((usr) => {return usr==loggedInProfile.username ? {username: usr, avatar: loggedInProfile.avatar} 
+    : {username: usr, avatar: 'Generic Avatar'}})
+
+	console.log(usersAvatars)
+	res.send({avatars: usersAvatars})
 }
 
 const avatarF = (req, res) => {
         let newAvatar = req.body
         newAvatar.username = loggedInProfile.username
         loggedInProfile.avatar = newAvatar.avatar
-
-        avatars = avatars.filter((x)=>{return x.username != loggedInProfile.username})
-        avatars.push(newAvatar)
         res.send(newAvatar)
 }
 
 const dob = (req, res) => {
 	res.send({username: loggedInProfile.username, dob: loggedInProfile.dob})
 }
-*/
-
-/*
 module.exports = app => {
 	app.get('/headlines/:user?', headlines),
 	app.put('/headline', headline),
@@ -106,9 +98,4 @@ module.exports = app => {
 	app.get('/avatars/:user?', avatarsF),
 	app.put('/avatar', avatarF),
 	app.get('/dob', dob)
-}
-*/
-module.exports = app => {
-	app.get('/headlines/:user?', headlines),
-	app.put('/headline', headline)
 }
