@@ -7,8 +7,6 @@ const randomstring = require("randomstring")
 //curl -H "Content-Type: application/json" -X POST -d '{"username":"xyz","password":"memes"}' http://localhost:3000/register
 //curl -H "Content-Type: application/json" -X POST -d '{"username":"xyz","password":"memes"}' http://localhost:3000/login -i
 
-let nextArticleNum = 4
-let articles = [{id: 1, author: 'Dude', text: 'stuff'},{id: 2, author: 'Dude2', text: 'stuff2'},{id: 3, author: 'Dude3', text: 'stuff3'}]
 let uRecords = {}
 
 const register = (req, res) => {
@@ -56,28 +54,7 @@ const password = (req, res) => {
 }
 
 module.exports = app => {
-	//app.post('/article', addArticle),
-	//app.get('/articles/:id?', getArticles),
 	app.post('/register', register),
 	app.post('/login', login)
 	app.put('/password', password)
 }
-
-
-/*
-const app = express()
-app.use(bodyParser.json())
-app.post('/article', addArticle)
-app.get('/articles/:id?', getArticles)
-app.post('/register', register)
-app.post('/login', login)
-app.put('/password', password)
-
-// Get the port from the environment, i.e., Heroku sets it
-const port = process.env.PORT || 3000
-const server = app.listen(port, () => {
-     const addr = server.address()
-     console.log(`Server listening at http://${addr.address}:${addr.port}`)
-})
-
-*/

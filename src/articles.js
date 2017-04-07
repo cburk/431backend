@@ -14,7 +14,7 @@ const userArticles = [{_id: 5, author: currentUser, text: 'art 5', date: new Dat
 let nextArticleNum = 8
 
 const postArticle = (req, res) => {
-    //TODO: Add image if there
+    //TODO at a later assignment: Add image if there
     console.log("Should be new?")
     const newArticle = {author: currentUser, _id: nextArticleNum, text: req.body.text, date: new Date(), comments: []}
     nextArticleNum += 1
@@ -24,7 +24,7 @@ const postArticle = (req, res) => {
 }
 
 const putArticle = (req, res) => {
-
+    res.send({articles: [{_id: -1, author: 'PUT IS STUBBED', text: 'PUT IS STUBBED', date: new Date(), comments: []}]})
 }
 
 const getArticles = (req, res) => {
@@ -41,16 +41,3 @@ module.exports = app => {
     app.put('/articles/:id', putArticle),
 	app.get('/articles/:id?', getArticles)
 }
-/*
-const app = express()
-app.use(bodyParser.json())
-app.post('/article', addArticle)
-app.get('/articles/:id?', getArticles)
-
-// Get the port from the environment, i.e., Heroku sets it
-const port = process.env.PORT || 3000
-const server = app.listen(port, () => {
-     const addr = server.address()
-     console.log(`Server listening at http://${addr.address}:${addr.port}`)
-})
-*/
