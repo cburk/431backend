@@ -1,0 +1,10 @@
+> RiceBookServer@0.0.0 testxunit /Users/christianburkhartsmeyer/comp431/431backend
+> mocha -R xunit src/**/*.spec.js
+
+<testsuite name="Mocha Tests" tests="5" failures="0" errors="0" skipped="0" timestamp="Fri, 07 Apr 2017 21:37:39 GMT" time="0.071">
+<testcase classname="Validate Article functionality" name="should give me three or more articles" time="0.033"/>
+<testcase classname="Validate Article functionality" name="should add two articles with successive article ids, and return the article each time" time="0.01"/>
+<testcase classname="Validate Article functionality" name="should return an article with a specified id" time="0.007"/>
+<testcase classname="Validate Article functionality" name="should return nothing for an invalid id" time="0.004"/>
+<testcase classname="Validate Profile functionality" name="should updates default users headline" time="0.013"/>
+</testsuite>

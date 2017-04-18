@@ -1,6 +1,6 @@
 { 
      "netid": "cjb6",
   "frontend": "https://hard-linen.surge.sh",
-   "backend": "idk"
+   "backend": "https://cjb6hwk6back.herokuapp.com"
 }
 
