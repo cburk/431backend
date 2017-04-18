@@ -61,7 +61,7 @@ const headline = (req, res) => {
 	res.send(newHeadline)
 }
 
-/* Given a parameter to search for, returns a callback for mongoose find that sends res that required user info (parameter) */
+/* Given a parameter to search for, returns a function for mongoose find that sends res that required user info (parameter) */
 const getParameterizedReturnFunction = (res, parameter) => (err, uiList) => {
         if(uiList.length == 0){
             res.send('Error: user info not found')
@@ -91,11 +91,8 @@ const putEmail = (req, res) => {
 }
 
 const getZip = (req, res) => {
-        if(req.params.user==undefined){
-                res.send({username: loggedInProfile.username, zipcode: loggedInProfile.zipcode})
-        }else{
-                res.send({username: req.params.user, zipcode: '12345'})
-        }
+        //TODO: Replace loggedInProfile.username w/ username parsed from session token
+        UsersInfo.find({username: req.params.user ? req.params.user : loggedInProfile.username}).exec(getParameterizedReturnFunction(res, 'zipcode'))    
 }
 
 const putZip = (req, res) => {
@@ -125,7 +122,8 @@ const avatarF = (req, res) => {
 }
 
 const dob = (req, res) => {
-	res.send({username: loggedInProfile.username, dob: loggedInProfile.dob})
+    //TODO: Replace loggedInProfile.username w/ username parsed from session token
+    UsersInfo.find({username: loggedInProfile.username}).exec(getParameterizedReturnFunction(res, 'dob'))
 }
 module.exports = app => {
 	app.get('/headlines/:user?', headlines),
