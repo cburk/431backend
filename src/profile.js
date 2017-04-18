@@ -61,13 +61,26 @@ const headline = (req, res) => {
 	res.send(newHeadline)
 }
 
+/* Given a parameter to search for, returns a callback for mongoose find that sends res that required user info (parameter) */
+const getParameterizedReturnFunction = (res, parameter) => (err, uiList) => {
+        if(uiList.length == 0){
+            res.send('Error: user info not found')
+            return
+        }
+        const thisUserInfo = uiList[0]
+        res.send({username: thisUserInfo.username, [parameter]: thisUserInfo[parameter]})
+    }
+
 const getEmail = (req, res) => {
 	//If not mentioned, return email for logged in user
 	if(req.params.user==undefined){
-                res.send({username: loggedInProfile.username, email: loggedInProfile.email})
-        }else{
-                res.send({username: req.params.user, email: 'stubbed@email.com'})
-        }
+        UsersInfo.find({username: loggedInProfile.username}).exec(getParameterizedReturnFunction(res, 'email'))
+            //TODO: Get loggedInProfile.username by parsing session token, still hardcoded for now
+            //res.send({username: loggedInProfile.username, email: loggedInProfile.email})
+            
+    }else{
+        UsersInfo.find({username: req.params.user}).exec(getParameterizedReturnFunction(res, 'email'))
+    }
 }
 
 const putEmail = (req, res) => {
