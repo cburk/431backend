@@ -1,15 +1,20 @@
 const express = require('express')
 const bodyParser = require('body-parser')
+const cookieParser = require('cookie-parser')
 
 const index = (req, res) => {
      res.send({ hello: 'world' })
 }
 
 const app = express()
+console.log("On bp")
 app.use(bodyParser.json())
+console.log("Yep")
+app.use(cookieParser())
+console.log("No?")
 app.get('/', index)
 require('./src/profile')(app)
-require('./src/auth')(app)
+require('./src/auth').reg(app)
 require('./src/articles')(app)
 require('./src/following')(app)
 

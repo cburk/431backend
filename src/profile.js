@@ -128,8 +128,10 @@ const dob = (req, res) => {
     //TODO: Replace loggedInProfile.username w/ username parsed from session token
     UsersInfo.find({username: loggedInProfile.username}).exec(getParameterizedReturnFunction(res, 'dob'))
 }
-module.exports = app => {
-	app.get('/headlines/:user?', headlines),
+
+const isLoggedIn = require('./auth').isLoggedIn
+module.exports = (app) => {
+	app.get('/headlines/:user?', isLoggedIn, headlines),
 	app.put('/headline', headline),
 	app.put('/email', putEmail),
 	app.get('/email/:user?', getEmail),

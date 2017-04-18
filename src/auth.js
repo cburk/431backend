@@ -14,11 +14,12 @@ const randomstring = require("randomstring")
 let uRecords = {}
 
 var UsersInfo = require('./db/db_model.js').UsersInfo
+/* TODO: Need to return error if user already exists */
 const register = (req, res) => {
      console.log('register, Payload received', req.body)
      const password = req.body.password
      const username = req.body.username
-	console.log("Username: ", username)
+     console.log("Username: ", username)
      const salt = randomstring.generate(4)
      const hash = md5(password + salt)
      uRecords[username] = {salt, hash}
@@ -53,16 +54,28 @@ const login = (req, res) => {
 
 	//Success, set cookie and respond
 	//TODO: Unsure if a good idea (probs not from sec standpoint, but sid is just hash
-	res.cookie('cookieName', userObj.hash, {maxAge: 3600*1000})
+	res.cookie('sessionId', userObj.hash, {maxAge: 3600*1000})
 	res.send({username, result: 'success'})
 }
 
 const password = (req, res) => {
-     res.send({username: 'Christian Hardcoded', status: 'will not change'})
+     res.send({username: 'Christian-Hardcoded', status: 'will not change'})
 }
 
-module.exports = app => {
-	app.post('/register', register),
-	app.post('/login', login)
-	app.put('/password', password)
+const isLoggedIn = (req, res, next) => {
+    const sessionId = req.cookies['sessionId']
+    if(!sessionId){
+        console.log("Error: User not logged in")
+    }
+    req.user = 'Christian-Hardcoded'
+    return next()
+}
+
+module.exports = {
+    reg: (app) => {
+        app.post('/register', register),
+        app.post('/login', login),
+        app.put('/password', password)
+    },
+    isLoggedIn: isLoggedIn
 }
