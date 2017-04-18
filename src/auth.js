@@ -7,8 +7,13 @@ const randomstring = require("randomstring")
 //curl -H "Content-Type: application/json" -X POST -d '{"username":"xyz","password":"memes"}' http://localhost:3000/register
 //curl -H "Content-Type: application/json" -X POST -d '{"username":"xyz","password":"memes"}' http://localhost:3000/login -i
 
+//curl -H "Content-Type: application/json" -X POST -d '{"text":"article 1 text"}' http://localhost:3000/add
+
+//curl -H "Content-Type: application/json" -X PUT -d '{"headline":"headline now"}' http://localhost:3000/add
+
 let uRecords = {}
 
+var UsersInfo = require('./db/db_model.js').UsersInfo
 const register = (req, res) => {
      console.log('register, Payload received', req.body)
      const password = req.body.password
@@ -19,6 +24,9 @@ const register = (req, res) => {
      uRecords[username] = {salt, hash}
      console.log("added user record: ", uRecords)
 
+     //Store user info in db
+     new UsersInfo({username, password, dob: req.body.dob, zipcode: req.body.zipcode, email: req.body.email, headline: ''}).save()
+     
      res.send('ok\n')
 }
 

@@ -14,12 +14,9 @@ describe('Validate Profile functionality', () => {
             //Get the original headline
             fetch(url("/headlines"))
             .then(res => {
-                console.log("To here?")
                 return res.text()
             })
             .then(body => {
-                console.log("Received and changed?")
-                console.log(JSON.parse(body))
                 expect(JSON.parse(body).headlines[0].headline).to.not.eql(null)
             })
             //Change the headline
@@ -31,7 +28,6 @@ describe('Validate Profile functionality', () => {
                 })
             })
             .then((res) => {
-                console.log(res)
                 return res.text()
             })
             .then(body => {
@@ -47,7 +43,6 @@ describe('Validate Profile functionality', () => {
 			})
 			.then(body => {
 				const relevantHeadlines = JSON.parse(body).headlines
-				console.log("Mostly through, did we get headlines? ", relevantHeadlines)
 				expect(relevantHeadlines[0].headline).to.eql(newHeadline.headline)
 			}).then(done)
             .catch(done)

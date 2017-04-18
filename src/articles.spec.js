@@ -38,10 +38,9 @@ describe('Validate Article functionality', () => {
                 return res.text()
         })
         .then(body => {
-                console.log("For this part of test: ", JSON.parse(body))
                 const arts = JSON.parse(body).articles
                 expect(arts[arts.length - 1].text).to.eql(thisBody.text)
-                firstId = arts[arts.length - 1].id
+                firstId = arts[arts.length - 1]._id
         }).then(body => {
             //Post 2
             // add a second article
@@ -59,7 +58,7 @@ describe('Validate Article functionality', () => {
             .then(body => {
                     const secondArts = JSON.parse(body).articles
                     expect(secondArts[secondArts.length - 1].text).to.eql(thisBody2.text)
-                    expect(secondArts[secondArts.length - 1].id).to.eql(firstId + 1)
+                    expect(secondArts[secondArts.length - 1]._id).to.eql(firstId + 1)
             })
         })
         .then(done)
@@ -76,12 +75,10 @@ describe('Validate Article functionality', () => {
         })
         .then(body => {
                 anId = JSON.parse(body).articles[0]._id
-                console.log("Found id: ", anId)
         }).then(body => {
             //Try to get the actual id
             fetch(url("/articles", anId))
             .then(res => {
-			     //console.log("Tried for url: ", url("/articles/" + anId))
                 expect(res.status).to.eql(200)
                 return res.text()
             })
@@ -102,7 +99,6 @@ describe('Validate Article functionality', () => {
                 return res.text()
         })
         .then(body => {
-			console.log(body)
 			expect(JSON.parse(body).articles.length).to.eql(0)
                 })
 		.then(done)

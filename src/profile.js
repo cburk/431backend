@@ -8,30 +8,56 @@ const loggedInProfile = {
 }
 
 //let hLines = {headlines: [{username: 'uname', headline: 'headline'}, {username: 'p2', headline: 'stuff'}, {username: 'Christian Hardcoded', headline: 'Logged in headline'}]}
-//let avatars = [{username: 'uname', avatar: 'avatar'}, {username: 'p2', avatar: 'avatar2'}, {username: 'Christian Hardcoded', avatar: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/DWLeebron.jpg/220px-DWLeebron.jpg'}]
+//let avatars = [{username: 'uname', avatar: 'avatar'}, {username: 'p2', avatar: 'avatar2'}, {username: 'Christian-Hardcoded', avatar: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/DWLeebron.jpg/220px-DWLeebron.jpg'}]
 //let zips = [{username: 'uname', zipcode: 23456}, {username: 'p2', zipcode: 78901}, {username: 'Christian Hardcoded', zipcode: 12345}]
 //let emails = [{username: 'uname', email: 'b@c.com'}, {username: 'p2', email: 'p@2.c'},  {username: 'Christian Hardcoded', email: 'logged@in.com'}]
 
+//curl -H "Content-Type: application/json" -X PUT -d '{"headline":"headline now"}' http://localhost:3000/headline
+//curl -H "Content-Type: application/json" -X POST -d '{"username": "Christian-Hardcoded", "password": "p1", "email": "asdf@asd.f", "zipcode": 12345, "dob": "Mon Apr 17 2017 21:40:37 GMT-0500 (CDT)"}' http://localhost:3000/register
+//curl -H "Content-Type: application/json" http://localhost:3000/headlines
+var mongoose = require('mongoose')
+var UsersInfo = require('./db/db_model.js').UsersInfo
 const headlines = (req, res) => {
 	// Correct behavior: W/ no arguments, return headline of logged in user, otherwise return for all users mentioned
 	// If no users specified, just return headlines for logged in
+    //TODO: Get loggedInProfile.username by parsing session token, still hardcoded for now
 	const users = req.params.user ? req.params.user.split(',') : [loggedInProfile.username]
+    
+    UsersInfo.find({
+    }).exec((err, items) => {
+        console.log("Hopefully all user records: ", items)
+    })
+    
+    UsersInfo.find({
+        username: { $in: users }
+    }).exec((err, items) => {
+        res.send({headlines: items.map((userInfo) => {return {username: userInfo.username, headline: userInfo.headline}})})
+    })
 	
     //Current correct behavior: If user not logged in user, return a generic response
     //Otherwise, return current user's headline
-    const userHeadlines = users.map((usr) => {return usr==loggedInProfile.username ? {username: usr, headline: loggedInProfile.headline} 
+    /*
+    const userHeadlines = users.map((usr) => {return usr==loggedInProfile.username ? {username: usr, headline: loggedInProfile.headline}
     : {username: usr, headline: 'Generic Headline'}})
 
 	console.log(userHeadlines)
 	res.send({headlines: userHeadlines})
+    */
 }
 const headline = (req, res) => {
 	// Update local profile
-	loggedInProfile.headline = req.body.headline
+    //loggedInProfile.headline = req.body.headline
 
 	// Update headlines list
-	let newHeadline = req.body
+    let newHeadline = req.body
+    //TODO: Get loggedInProfile.username by parsing session token, still hardcoded for now
 	newHeadline.username = loggedInProfile.username
+    console.log('trying to update w/ value: ', newHeadline.headline)
+    UsersInfo.findOneAndUpdate({username: newHeadline.username}, {headline: newHeadline.headline}, (err, items) => {
+        //TODO: Maybe some error checking?  items isn't useful, just gives us matching pre-update userinfo
+        //console.log("Update correctly? ", items)
+    })
+
 	res.send(newHeadline)
 }
 
