@@ -86,20 +86,23 @@ const getEmail = (req, res) => {
 const putEmail = (req, res) => {
 	let newEmail = req.body
 	newEmail.username = loggedInProfile.username
-	loggedInProfile.email = newEmail.email
-	res.send(newEmail)
+    UsersInfo.findOneAndUpdate({username: newEmail.username}, {email: newEmail.email}, (err, items) => {
+    })
+    
+    res.send(newEmail)
 }
 
 const getZip = (req, res) => {
-        //TODO: Replace loggedInProfile.username w/ username parsed from session token
-        UsersInfo.find({username: req.params.user ? req.params.user : loggedInProfile.username}).exec(getParameterizedReturnFunction(res, 'zipcode'))    
+    //TODO: Replace loggedInProfile.username w/ username parsed from session token
+    UsersInfo.find({username: req.params.user ? req.params.user : loggedInProfile.username}).exec(getParameterizedReturnFunction(res, 'zipcode'))    
 }
 
 const putZip = (req, res) => {
-        let newZip = req.body
-        newZip.username = loggedInProfile.username
-        loggedInProfile.zipcode = newZip.zipcode
-        res.send(newZip)
+    let newZip = req.body
+    newZip.username = loggedInProfile.username
+    UsersInfo.findOneAndUpdate({username: newZip.username}, {zipcode: newZip.zipcode}, (err, items) => {
+    })
+    res.send(newZip)
 }
 
 const avatarsF = (req, res) => {
@@ -115,10 +118,10 @@ const avatarsF = (req, res) => {
 }
 
 const avatarF = (req, res) => {
-        let newAvatar = req.body
-        newAvatar.username = loggedInProfile.username
-        loggedInProfile.avatar = newAvatar.avatar
-        res.send(newAvatar)
+    let newAvatar = req.body
+    newAvatar.username = loggedInProfile.username
+    loggedInProfile.avatar = newAvatar.avatar
+    res.send(newAvatar)
 }
 
 const dob = (req, res) => {
