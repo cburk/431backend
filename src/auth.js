@@ -95,7 +95,20 @@ const isLoggedIn = (req, res, next) => {
 }
 
 const password = (req, res) => {
-     res.send({username: 'Christian-Hardcoded', status: 'will not change'})
+    if(!req.body.password){
+        console.log("Bad password reqest, no password included")
+        res.sendStatus(400)
+        return
+    }
+    const salt = randomstring.generate(4)
+    const hash = md5(req.body.password + salt)
+    
+    //Update the change in the db
+    UsersPasswordInfo.findOneAndUpdate({username: req.user}, {salt: salt, hash: hash}).exec(() => {
+        
+    })
+    
+    res.send({username: req.user, status: 'updated'})
 }
 
 const logout = (req, res) => {
