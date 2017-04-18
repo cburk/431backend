@@ -11,9 +11,17 @@ const randomstring = require("randomstring")
 
 //curl -H "Content-Type: application/json" -X PUT -d '{"headline":"headline now"}' http://localhost:3000/add
 
-let uRecords = {}
+const sessionUser = {}
 
 var UsersInfo = require('./db/db_model.js').UsersInfo
+var UsersPasswordInfo = require('./db/db_model.js').UsersPass
+
+const dropUserInfo = (req, res) => {
+    UsersInfo.remove({}, () => {console.log("Drop call received")})
+    UsersPasswordInfo.remove({}, () => {console.log("Drop call received")})
+    res.send("Dropped user info tables")
+}
+
 /* TODO: Need to return error if user already exists */
 const register = (req, res) => {
      console.log('register, Payload received', req.body)
@@ -22,13 +30,38 @@ const register = (req, res) => {
      console.log("Username: ", username)
      const salt = randomstring.generate(4)
      const hash = md5(password + salt)
-     uRecords[username] = {salt, hash}
-     console.log("added user record: ", uRecords)
+     
+     // TODO: Are there already records for this user?
+     //.find({username: loggedInProfile.username}).exec
 
      //Store user info in db
-     new UsersInfo({username, password, dob: req.body.dob, zipcode: req.body.zipcode, email: req.body.email, headline: ''}).save()
+     new UsersPasswordInfo({username, salt, hash}).save()
+     new UsersInfo({username, dob: req.body.dob, zipcode: req.body.zipcode, email: req.body.email, headline: ''}).save()
      
      res.send('ok\n')
+}
+
+const verifyUser = (username, password, res) => {
+    UsersPasswordInfo.find({username: username}, (error, items) => {
+        console.log("Users password query returned: ", items)
+        const userObj = items[0]
+        if(!userObj){
+            res.sendStatus(400)
+            return
+        }
+        hashWithSent = md5(password + userObj.salt)
+        if(hashWithSent != userObj.hash){
+            console.log("Bad hash found, erase for prod")
+            res.sendStatus(400)
+            return
+        }
+
+        //Success, set/store cookie and respond
+        const sessId = md5(userObj.hash + new Date().getTime())
+        sessionUser[sessId] = username
+        res.cookie('sessionId', sessId, {maxAge: 3600*1000})
+        res.send({username, result: 'success'})
+    })
 }
 
 const login = (req, res) => {
@@ -39,43 +72,45 @@ const login = (req, res) => {
 		res.sendStatus(400)
 		return
 	}
-	const userObj = uRecords[username]
-	console.log("Found record for user? ", userObj)
-	if(!userObj){
-		res.sendStatus(400)
-		return
-	}
-	hashWithSent = md5(password + userObj.salt)
-	if(hashWithSent != userObj.hash){
-		console.log("Bad hash found, erase for prod")
-		res.sendStatus(400)
-		return
-	}
+	//const userObj = uRecords[username]
+	verifyUser(username, password, res)
+}
 
-	//Success, set cookie and respond
-	//TODO: Unsure if a good idea (probs not from sec standpoint, but sid is just hash
-	res.cookie('sessionId', userObj.hash, {maxAge: 3600*1000})
-	res.send({username, result: 'success'})
+const isLoggedIn = (req, res, next) => {
+    console.log(req.cookies)
+    const sessionId = req.cookies['sessionId']
+    if(!sessionId){
+        console.log("Error: User not logged in")
+        res.sendStatus(401)
+        return
+    }
+    req.user = sessionUser[sessionId]
+    if(!req.user){
+        console.log("Error: Sessionid invalid")
+        res.sendStatus(401)
+        return
+    }
+    console.log("From sessid, mapping, found user: ", req.user)
+    return next()
 }
 
 const password = (req, res) => {
      res.send({username: 'Christian-Hardcoded', status: 'will not change'})
 }
 
-const isLoggedIn = (req, res, next) => {
-    const sessionId = req.cookies['sessionId']
-    if(!sessionId){
-        console.log("Error: User not logged in")
-    }
-    req.user = 'Christian-Hardcoded'
-    return next()
+const logout = (req, res) => {
+    // Remove cookie
+    res.clearCookie("sessionId")
+    res.sendStatus(200)
 }
 
 module.exports = {
     reg: (app) => {
         app.post('/register', register),
         app.post('/login', login),
-        app.put('/password', password)
+        app.put('/password', isLoggedIn, password),
+        app.put('/logout', isLoggedIn, logout),
+        app.put('/dropusers', dropUserInfo)
     },
     isLoggedIn: isLoggedIn
 }

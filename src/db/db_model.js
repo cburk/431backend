@@ -12,10 +12,14 @@ var followingsSchema = new mongoose.Schema({
     username: String, following: [ Number ]
 })
 var userInfoSchema = new mongoose.Schema({
-    username: String, password: String, dob: Date, email: String, zipcode: Number, headline: String
+    username: String, dob: Date, email: String, zipcode: Number, headline: String
+})
+var userPasswordSchema = new mongoose.Schema({
+    username: String, salt: String, hash: String
 })
 
 exports.Article = mongoose.model('article', articleSchema)
 exports.UsersInfo = mongoose.model('UsersInfo', userInfoSchema)
+exports.UsersPass = mongoose.model('UsersPass', userPasswordSchema)
 exports.Following = mongoose.model('following', followingsSchema)
 

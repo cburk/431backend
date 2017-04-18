@@ -1,0 +1,19 @@
+Reflections:
+
+• What did you hope to learn but did not?
+    I was hoping to learn a bit more about hadoop or other containerization services like that.  I did not necessarily expect them to be mentioned, but it would have been nice.
+    
+• What did you really enjoy learning about?
+    I really liked learning about OAth, I had always wondered how that technology worked and it seems very useful.
+
+• What worked well in the course? and how?
+    The in class assignments, although sometimes a lot of work, gave us a lot of exposure writing code in these languages and were good primers for the homeworks
+
+• What did not work well in the course and how might it be improved?
+    There was a huge amount of coursework, and some areas went a bit too fast in my opinion.  
+
+• What could I have done to help you more, presentation of material, design of in class exercises, goals of projects – and be specific please!
+    I think maybe more exposure to basic javascript/design patterns in js at the beginning would have been more useful than some of the lectures on modern technologies we just touched on briefly.  I struggled a lot with the game project and still don't feel very comfortable with normal js.
+
+• Anything else you like to say?
+    It was a really interesting class, I learned a lot, thanks!
