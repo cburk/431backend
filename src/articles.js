@@ -20,21 +20,42 @@ const putArticle = (req, res) => {
     
     Article.findOne({_id: req.params.id}, (err, article) => {
         console.log("Found article? ", article)
-            if(!req.body.commentId){
-                // Update article content if owned
-                if(article.author == req.user){
-                    article.update({text: req.body.text}, {}, (err, raw) => {
-                        console.log("After update: ", raw)
-                        //TODO: Return all articles or just one?
-                        res.send({articles: []})
-                    })
-                }
+        if(!req.body.commentId){
+            // Update article content if owned
+            if(article.author == req.user){
+                article.update({text: req.body.text}, {}, (err, raw) => {
+                    console.log("After update: ", raw)
+                    //TODO: Return all articles or just one?
+                    res.send({articles: []})
+                    return
+                })
             }else{
-                // Post new comment
-                if(req.body.commentId == -1){
-
+                res.sendStatus(401)
+                return
+            }
+        }else{
+            // Post new comment
+            if(req.body.commentId == -1){
+                const new_id = article.comments.length + 1
+                article.update({ $push: { comments: {commentId: new_id, author: req.user, date: Date(), text: req.body.text} } }, {}, (err, raw) => {
+                    console.log("After comment creation: ", raw)
+                    //TODO: What do we send?
+                    res.send({stuff: 'things'})
+                    return
+                })
+            // Otherwise, update comment if owned
+            }else{
+                const editComment = article.comments.filter((comment) => {return comment.commentId==req.body.commentId})[0]
+                console.log("Found comment: ", editComment)
+                if(editComment.author==req.user){
+                    editComment.text = req.body.text
+                    article.save()
+                    res.send(200)
+                    //editComment.save()
                 }else{
-
+                    res.sendStatus(401)
+                    return                    
+                }
             }
         }
     })    
