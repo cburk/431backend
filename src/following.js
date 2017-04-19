@@ -13,7 +13,7 @@ const deleteFollowing = (req, res) => {
     //usersFollowings = usersFollowings.filter(r=>{return r != req.params.user})
     console.log(usersFollowings)
     Following.find({ username: req.user }).exec((err, items) => {
-        res.send({username: req.user, following: items.following})
+        res.send({username: req.user, following: items[0].following})
     })
     //res.send({username: user, following: usersFollowings})
 }
@@ -36,18 +36,19 @@ const putFollowing = (req, res) => {
     
     //Return new list
     Following.find({ username: req.user }).exec((err, items) => {
-        res.send({username: req.user, following: items.following})
+        res.send({username: req.user, following: items[0].following})
     })
 }
 
 const getFollowing = (req, res) => {
-    console.log(req.params.user)
-    console.log(req.params)
-	if(!req.params.user || req.params.user == user){
-        res.send({username: user, following: usersFollowings})
-    }else{
-        res.send({username: req.params.user, following: othersFollowings})
-    }
+    console.log("A: ", req.params.user)
+    console.log("B: ", req.user)
+    const query = { username: (req.params.user ? req.params.user : req.user) }
+    Following.find(query).exec((err, items) => {    
+        console.log("items: ", items)
+        console.log("Following: ", items.following)
+        res.send({username: req.params.user, following: items[0].following})
+    })
 }
 
 const isLoggedIn = require('./auth').isLoggedIn
