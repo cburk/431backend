@@ -13,7 +13,7 @@ const deleteFollowing = (req, res) => {
     //usersFollowings = usersFollowings.filter(r=>{return r != req.params.user})
     console.log(usersFollowings)
     Following.find({ username: req.user }).exec((err, items) => {
-        res.send({username: req.user, following: items})
+        res.send({username: req.user, following: items.following})
     })
     //res.send({username: user, following: usersFollowings})
 }
@@ -36,7 +36,7 @@ const putFollowing = (req, res) => {
     
     //Return new list
     Following.find({ username: req.user }).exec((err, items) => {
-        res.send({username: req.user, following: items})
+        res.send({username: req.user, following: items.following})
     })
 }
 
