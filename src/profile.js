@@ -102,21 +102,30 @@ const putZip = (req, res) => {
 }
 
 const avatarsF = (req, res) => {
-	const users = req.params.user ? req.params.user.split(',') : [loggedInProfile.username]
-	
+	const users = req.params.user ? req.params.user.split(',') : [req.user]
+    console.log("Users before: ", users)
+	if(users[users.length - 1]==''){
+        users.pop()
+    }
+    console.log("Users after: ", users)
+    
     //Current correct behavior: If user not logged in user, return a generic response
     //Otherwise, return current user's headline
-    const usersAvatars = users.map((usr) => {return usr==loggedInProfile.username ? {username: usr, avatar: loggedInProfile.avatar} 
+    const usersAvatars = users.map((usr) => {return usr==req.user ? {username: usr, avatar: 'Generic Avatar'} 
     : {username: usr, avatar: 'Generic Avatar'}})
 
-	console.log(usersAvatars)
-	res.send({avatars: usersAvatars})
+	//console.log(usersAvatars)
+	//res.send({avatars: usersAvatars})
+    //TODO: Fix later, for now, just returns this stub:
+    res.send({avatars: users.map((usr) => {return {username: usr, avatar: ''}})})
 }
 
 const avatarF = (req, res) => {
     let newAvatar = req.body
-    newAvatar.username = loggedInProfile.username
-    loggedInProfile.avatar = newAvatar.avatar
+    newAvatar.username = req.user
+    
+    //TODO: Actually do this later
+    //loggedInProfile.avatar = newAvatar.avatar
     res.send(newAvatar)
 }
 
@@ -132,7 +141,7 @@ module.exports = (app) => {
 	app.get('/email/:user?', isLoggedIn, getEmail),
 	app.get('/zipcode/:user?', isLoggedIn, getZip),
 	app.put('/zipcode', isLoggedIn, putZip),
-	app.get('/avatars/:user?', avatarsF),
-	app.put('/avatar', avatarF),
+	app.get('/avatars/:user?', isLoggedIn, avatarsF),
+	app.put('/avatar', isLoggedIn, avatarF),
 	app.get('/dob', isLoggedIn, dob)
 }

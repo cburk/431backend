@@ -52,8 +52,11 @@ const getFollowing = (req, res) => {
 }
 
 const isLoggedIn = require('./auth').isLoggedIn
-module.exports = app => {
-	app.get('/following/:user?', isLoggedIn, getFollowing),
-	app.put('/following/:user', isLoggedIn, putFollowing),
-	app.delete('/following/:user', isLoggedIn, deleteFollowing)
+module.exports = {
+    reg: (app) => {
+        app.get('/following/:user?', isLoggedIn, getFollowing),
+        app.put('/following/:user', isLoggedIn, putFollowing),
+        app.delete('/following/:user', isLoggedIn, deleteFollowing)
+    },
+    putFollowing: putFollowing
 }

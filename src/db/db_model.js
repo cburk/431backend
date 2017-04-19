@@ -12,7 +12,7 @@ var followingsSchema = new mongoose.Schema({
     username: String, following: [ String ]
 })
 var userInfoSchema = new mongoose.Schema({
-    username: String, dob: Date, email: String, zipcode: Number, headline: String
+    username: String, dob: Date, email: String, avatar: '', zipcode: Number, headline: String
 })
 var userPasswordSchema = new mongoose.Schema({
     username: String, salt: String, hash: String

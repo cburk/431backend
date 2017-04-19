@@ -20,10 +20,42 @@ const sessionUser = {}
 var UsersInfo = require('./db/db_model.js').UsersInfo
 var UsersPasswordInfo = require('./db/db_model.js').UsersPass
 var Following = require('./db/db_model.js').Following
-const dropUserInfo = (req, res) => {
+var Article = require('./db/db_model.js').Article
+const dropAllTables = (req, res) => {
     UsersInfo.remove({}, () => {console.log("Drop call received")})
     UsersPasswordInfo.remove({}, () => {console.log("Drop call received")})
+    Following.remove({}, () => {console.log("Drop call received")})
+    Article.remove({}, () => {console.log("Drop call received")})
     res.send("Dropped user info tables")
+}
+
+const populateWSample = (req, res) => {
+    const resStub = {send: () => {}}
+    
+    //Register 3 users, including cjb6test as required
+    register({body: {username: 'cjb6test', avatar: '', password: 'minerals-related-business', dob: Date(), zipcode: 12345, email: 'test@mail.com', headline: 'GEneric test headline'}}, resStub)
+    
+    register({body: {username: 'cjb6', avatar: '', password: 'someone-task-concerned', dob: Date(), zipcode: 12321, email: 'cjb6@mail.com', headline: 'GEneric cjb headline'}}, resStub)
+    
+    register({body: {username: 'another-user', avatar: '',  password: 'a-pass-word', dob: Date(), zipcode: 81293, email: 'another@mail.com', headline: 'GEneric other headline'}}, resStub)
+    
+    //Add 10 articles, w/ 3 comments
+    new Article({_id: 1, author: 'cjb6', img: '', date: Date(), text: 'article 1 text', comments: [  ]}).save()
+    new Article({_id: 2, author: 'cjb6', img: '', date: Date(), text: 'article 2 text', comments: [  ]}).save()
+    new Article({_id: 3, author: 'cjb6test', img: '', date: Date(), text: 'article 3 text', comments: [  ]}).save()
+    new Article({_id: 4, author: 'cjb6', img: '', date: Date(), text: 'article 4 text', comments: [ 
+        {commentId: 1, author: 'another-user', date: Date(), text: 'comment 1 text'},
+        {commentId: 2, author: 'another-user', date: Date(), text: 'comment 2 text'}
+    ]}).save()
+    
+    //Set up follower relationships for cjb6test
+    const putFollowing = require('./following').putFollowing
+    //Just link these manually
+    
+    //putFollowing({user: 'cjb6test', params: {user: 'cjb6'}}, resStub)
+    //putFollowing({user: 'cjb6test', params: {user: 'another-user'}}, resStub)
+    
+    res.send("Populated tables w/ sample data")
 }
 
 /* TODO: Need to return error if user already exists */
@@ -41,7 +73,7 @@ const register = (req, res) => {
      //Store user info in db
      new Following({username, following: []}).save()
      new UsersPasswordInfo({username, salt, hash}).save()
-     new UsersInfo({username, dob: req.body.dob, zipcode: req.body.zipcode, email: req.body.email, headline: ''}).save()
+     new UsersInfo({username, avatar: req.body.avatar, dob: req.body.dob, zipcode: req.body.zipcode, email: req.body.email, headline: 'Default Headline'}).save()
      
      res.send('ok\n')
 }
@@ -129,7 +161,8 @@ module.exports = {
         app.post('/login', login),
         app.put('/password', isLoggedIn, password),
         app.put('/logout', isLoggedIn, logout),
-        app.put('/dropusers', dropUserInfo)
+        app.put('/dropall', dropAllTables)
+        app.put('/addSample', populateWSample)
     },
     isLoggedIn: isLoggedIn
 }
