@@ -9,7 +9,7 @@ var articleSchema = new mongoose.Schema({
 	comments: [ commentSchema ]
 })
 var followingsSchema = new mongoose.Schema({
-    username: String, following: [ Number ]
+    username: String, following: [ String ]
 })
 var userInfoSchema = new mongoose.Schema({
     username: String, dob: Date, email: String, zipcode: Number, headline: String

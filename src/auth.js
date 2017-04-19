@@ -11,11 +11,15 @@ const randomstring = require("randomstring")
 
 //curl -H "Content-Type: application/json" -X PUT -d '{"headline":"headline now"}' http://localhost:3000/add
 
+//TODO: Needs to be in final version
+//cjb6test	minerals-related-business
+// curl -H "Content-Type: application/json" -X POST -d '{"username":"cjb6test","password":"minerals-related-business"}' http://localhost:3000/register
+
 const sessionUser = {}
 
 var UsersInfo = require('./db/db_model.js').UsersInfo
 var UsersPasswordInfo = require('./db/db_model.js').UsersPass
-
+var Following = require('./db/db_model.js').Following
 const dropUserInfo = (req, res) => {
     UsersInfo.remove({}, () => {console.log("Drop call received")})
     UsersPasswordInfo.remove({}, () => {console.log("Drop call received")})
@@ -35,6 +39,7 @@ const register = (req, res) => {
      //.find({username: loggedInProfile.username}).exec
 
      //Store user info in db
+     new Following({username, following: []}).save()
      new UsersPasswordInfo({username, salt, hash}).save()
      new UsersInfo({username, dob: req.body.dob, zipcode: req.body.zipcode, email: req.body.email, headline: ''}).save()
      
