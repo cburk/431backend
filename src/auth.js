@@ -117,7 +117,8 @@ const password = (req, res) => {
 }
 
 const logout = (req, res) => {
-    // Remove cookie
+    // Remove sessId
+    delete sessionUser[req.cookies["sessionId"]]
     res.clearCookie("sessionId")
     res.sendStatus(200)
 }
