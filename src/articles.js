@@ -1,43 +1,60 @@
 const express = require('express')
 const bodyParser = require('body-parser')
 
-let articles = [{id: 1, author: 'Dude', text: 'stuff'},{id: 2, author: 'Dude2', text: 'stuff2'},{id: 3, author: 'Dude3', text: 'stuff3'}]
-
-const currentUser = 'Christian Hardcoded'
-const allArticles = [{_id: 5, author: currentUser, text: 'art 5', date: new Date(), comments: []},
-                    {_id: 6, author: currentUser, text: 'art 6!', date: new Date(), comments: []},
-                    {_id: 7, author: currentUser, text: 'art 7', date: new Date(), comments: []},
-                    {_id: 2, author: 'someone else', text: 'A different art', date: new Date(), comments: []}]
-const userArticles = [{_id: 5, author: currentUser, text: 'art 5', date: new Date(), comments: []},
-                    {_id: 6, author: currentUser, text: 'art 6!', date: new Date(), comments: []},
-                    {_id: 7, author: currentUser, text: 'art 7', date: new Date(), comments: []}]
-let nextArticleNum = 8
-
+Article = require('./db/db_model').Article
 const postArticle = (req, res) => {
-    //TODO at a later assignment: Add image if there
-    console.log("Should be new?")
-    const newArticle = {author: currentUser, _id: nextArticleNum, text: req.body.text, date: new Date(), comments: []}
-    nextArticleNum += 1
-    userArticles.push(newArticle)
-    allArticles.push(newArticle)
-    res.send({articles: userArticles})
+    //Get number of articles to find new id
+    Article.find({}).exec((err, articles) => {
+        const contents = {_id: articles.length + 1, author: req.user, img: '', date: Date(), text: req.body.text, comments: []}
+        new Article(contents).save()
+        res.send({articles: [contents]})
+    })
 }
 
 const putArticle = (req, res) => {
-    res.send({articles: [{_id: -1, author: 'PUT IS STUBBED', text: 'PUT IS STUBBED', date: new Date(), comments: []}]})
+    if(!req.body.text){
+        console.log("Error: no text passed")
+        res.sendStatus(400)
+        return
+    }
+    
+    Article.findOne({_id: req.params.id}, (err, article) => {
+        console.log("Found article? ", article)
+            if(!req.body.commentId){
+                // Update article content if owned
+                if(article.author == req.user){
+                    article.update({text: req.body.text}, {}, (err, raw) => {
+                        console.log("After update: ", raw)
+                        //TODO: Return all articles or just one?
+                        res.send({articles: []})
+                    })
+                }
+            }else{
+                // Post new comment
+                if(req.body.commentId == -1){
+
+                }else{
+
+            }
+        }
+    })    
 }
 
 const getArticles = (req, res) => {
-	if(req.params.id==undefined){
-	     res.send({articles: userArticles})
-	}
-	else{
-		res.send({articles: allArticles.filter((art) => {return art._id == req.params.id || art.author == req.params.id})})
-	}
+    /* As per spec:
+    There is NO requirement on the authors of the articles returned to the frontend. I.e., GET /articles can return all the articles in the database for this assignment.
+    
+    As a result, just returning all articles
+    */
+    
+    Article.find({}).exec((err, articles) => {
+        res.send({articles: articles})
+    })
 }
 
+const isLoggedIn = require('./auth').isLoggedIn
 module.exports = app => {
-	app.post('/article', postArticle),
-    app.put('/articles/:id', putArticle),
-	app.get('/articles/:id?', getArticles)
+	app.post('/article', isLoggedIn, postArticle),
+    app.put('/articles/:id', isLoggedIn, putArticle),
+	app.get('/articles/:id?', isLoggedIn, getArticles)
 }

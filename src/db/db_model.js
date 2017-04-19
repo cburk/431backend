@@ -5,7 +5,7 @@ var commentSchema = new mongoose.Schema({
 	commentId: Number, author: String, date: Date, text: String
 })
 var articleSchema = new mongoose.Schema({
-	id: Number, author: String, img: String, date: Date, text: String,
+	_id: Number, author: String, img: String, date: Date, text: String,
 	comments: [ commentSchema ]
 })
 var followingsSchema = new mongoose.Schema({
