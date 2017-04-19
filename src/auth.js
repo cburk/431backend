@@ -96,7 +96,7 @@ const verifyUser = (username, password, res) => {
         //Success, set/store cookie and respond
         const sessId = md5(userObj.hash + new Date().getTime())
         sessionUser[sessId] = username
-        res.cookie('sessionId', sessId, {maxAge: 3600*1000})
+        res.cookie('sessionId', sessId, {maxAge: 3600*1000, httpOnly: true})
         res.send({username, result: 'success'})
     })
 }
