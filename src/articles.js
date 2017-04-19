@@ -25,8 +25,9 @@ const putArticle = (req, res) => {
             if(article.author == req.user){
                 article.update({text: req.body.text}, {}, (err, raw) => {
                     console.log("After update: ", raw)
-                    //TODO: Return all articles or just one?
-                    res.send({articles: []})
+                    // Update local version of article to reflect change, return
+                    article.text = req.body.text
+                    res.send({articles: [article]})
                     return
                 })
             }else{
@@ -39,8 +40,9 @@ const putArticle = (req, res) => {
                 const new_id = article.comments.length + 1
                 article.update({ $push: { comments: {commentId: new_id, author: req.user, date: Date(), text: req.body.text} } }, {}, (err, raw) => {
                     console.log("After comment creation: ", raw)
-                    //TODO: What do we send?
-                    res.send({stuff: 'things'})
+                    // Update local version of article to reflect change, return
+                    article.comments.push({commentId: new_id, author: req.user, date: Date(), text: req.body.text})
+                    res.send({articles: [article]})
                     return
                 })
             // Otherwise, update comment if owned
@@ -50,11 +52,11 @@ const putArticle = (req, res) => {
                 if(editComment.author==req.user){
                     editComment.text = req.body.text
                     article.save()
-                    res.send(200)
+                    res.send({articles: [article]})
                     //editComment.save()
                 }else{
                     res.sendStatus(401)
-                    return                    
+                    return
                 }
             }
         }
