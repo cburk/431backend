@@ -18,12 +18,18 @@ const deleteFollowing = (req, res) => {
     //res.send({username: user, following: usersFollowings})
 }
 
+var UsersInfo = require('./db/db_model.js').UsersInfo
 const putFollowing = (req, res) => {
-    /*
-    usersFollowings.push(req.params.user)
-    res.send({username: user, following: usersFollowings})
-    */
     console.log("Request for user: ", req.params.user, " added to: ", req.user)
+    //Ensure requested user exists
+    UsersInfo.find({username: req.params.user}).exec((err, items) => {
+        if(items.length < 1){
+            res.sendStatus(404)
+            res.send("Error: requested user does not exist")
+            return
+        }
+    })
+    
     //Add user to list of logged in's followers
     Following.findOneAndUpdate(
         { username: req.user },
@@ -46,7 +52,6 @@ const getFollowing = (req, res) => {
     const query = { username: (req.params.user ? req.params.user : req.user) }
     Following.find(query).exec((err, items) => {    
         console.log("items: ", items)
-        console.log("Following: ", items.following)
         res.send({username: req.params.user, following: items[0].following})
     })
 }

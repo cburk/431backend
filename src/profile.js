@@ -21,6 +21,9 @@ const headlines = (req, res) => {
 	// Correct behavior: W/ no arguments, return headline of logged in user, otherwise return for all users mentioned
 	// If no users specified, just return headlines for logged in
 	const users = req.params.user ? req.params.user.split(',') : [req.user]
+    if(users[users.length - 1]==''){
+        users.pop()
+    }
     
     UsersInfo.find({
     }).exec((err, items) => {
@@ -121,6 +124,17 @@ const avatarsF = (req, res) => {
 }
 
 const avatarF = (req, res) => {
+    const users = req.params.user ? req.params.user.split(',') : [req.user]
+	if(users[users.length - 1]==''){
+        users.pop()
+    }
+    
+    UsersInfo.find({
+        username: { $in: users }
+    }).exec((err, items) => {
+        res.send({headlines: items.map((userInfo) => {return {username: userInfo.username, headline: userInfo.headline}})})
+    })    
+    
     let newAvatar = req.body
     newAvatar.username = req.user
     
