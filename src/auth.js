@@ -3,6 +3,11 @@ const bodyParser = require('body-parser')
 const md5 = require('md5')
 const randomstring = require("randomstring")
 
+const passport = require('passport')
+const FacebookStrategy = require('passport-facebook').Strategy
+const config = require('./oath_config')
+const session = require('express-session')
+
 //Sample POST for testing:
 //curl -H "Content-Type: application/json" -X POST -d '{"username":"xyz","password":"memes"}' http://localhost:3000/register
 //curl -H "Content-Type: application/json" -X POST -d '{"username":"xyz","password":"memes"}' http://localhost:3000/login -i
@@ -14,6 +19,28 @@ const randomstring = require("randomstring")
 //TODO: Needs to be in final version
 //cjb6test	minerals-related-business
 // curl -H "Content-Type: application/json" -X POST -d '{"username":"cjb6test","password":"minerals-related-business"}' http://localhost:3000/register
+
+let users = []
+passport.serializeUser((user, done) => {
+    //I think: log user in?
+    //Actually, I think user is their token/auth, we need to store it?
+    console.log("Called ser?  User? ", user)
+    users[user.id] = user
+    done(null, user.id)
+})
+passport.deserializeUser((id, done) => {
+    //I think: log user out?
+    console.log("Called deser?  User? ", id)
+    const user = users[id]
+    done(null, user)
+})
+passport.use(new FacebookStrategy(config, (token, refreshToken, profile, done) => {
+    console.log("Strategy being used?")
+    process.nextTick(() => {
+        console.log("In strategy func, profile? ", profile)
+        return done(null, profile)
+    })
+}))
 
 const sessionUser = {}
 
@@ -114,6 +141,10 @@ const login = (req, res) => {
 }
 
 const isLoggedIn = (req, res, next) => {
+    if(req.isAuthenticated()){
+        console.log("Checking authentication?")
+    }
+    
     console.log(req.cookies)
     const sessionId = req.cookies['sessionId']
     if(!sessionId){
@@ -155,14 +186,32 @@ const logout = (req, res) => {
     res.sendStatus(200)
 }
 
+const successMessage = (req, res) => {
+    console.log("Got to success")
+    res.send({success: 'message'})
+}
+const failMessage = (req, res) => {
+    console.log("Got to fail")
+    res.send({fail: 'message'})
+}
+
+
 module.exports = {
     reg: (app) => {
+        app.use(session({secret: 'LongSecretIDKWhatThisIs'}))
+        app.use(passport.initialize())
+        app.use(passport.session())
+        
         app.post('/register', register),
         app.post('/login', login),
         app.put('/password', isLoggedIn, password),
         app.put('/logout', isLoggedIn, logout),
-        app.put('/dropall', dropAllTables)
-        app.put('/addSample', populateWSample)
+        app.put('/dropall', dropAllTables),
+        app.put('/addSample', populateWSample),
+        app.get('/successMessage', successMessage)
+        app.get('/failMessage', failMessage)
+        app.use('/login/facebook', passport.authenticate('facebook', { scope: 'email' }))
+        app.get('/fb/callback', passport.authenticate('facebook', { failureRedirect: '/failMessage', successRedirect: '/successMessage' }))
     },
     isLoggedIn: isLoggedIn
 }
