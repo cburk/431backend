@@ -1,0 +1,4 @@
+heroku stuff@: https://final-backend-att1.herokuapp.com/
+to push: git push heroku master
+
+redis: redis://h:p95b741787cbc4e51ee4dc7e954ace749586ef80db996c801d7557ab814d1fc99@ec2-34-206-56-140.compute-1.amazonaws.com:34789
