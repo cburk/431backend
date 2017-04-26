@@ -8,6 +8,11 @@ const FacebookStrategy = require('passport-facebook').Strategy
 const config = require('./oath_config')
 const session = require('express-session')
 
+if (!process.env.REDIS_URL) {
+    process.env.REDIS_URL = 'redis://h:p95b741787cbc4e51ee4dc7e954ace749586ef80db996c801d7557ab814d1fc99@ec2-34-206-56-140.compute-1.amazonaws.com:34789'
+}
+const redis = require('redis').createClient(process.env.REDIS_URL)
+
 //Sample POST for testing:
 //curl -H "Content-Type: application/json" -X POST -d '{"username":"xyz","password":"memes"}' http://localhost:3000/register
 //curl -H "Content-Type: application/json" -X POST -d '{"username":"xyz","password":"memes"}' http://localhost:3000/login -i
@@ -41,8 +46,6 @@ passport.use(new FacebookStrategy(config, (token, refreshToken, profile, done) =
         return done(null, profile)
     })
 }))
-
-const sessionUser = {}
 
 var UsersInfo = require('./db/db_model.js').UsersInfo
 var UsersPasswordInfo = require('./db/db_model.js').UsersPass
@@ -122,7 +125,9 @@ const verifyUser = (username, password, res) => {
 
         //Success, set/store cookie and respond
         const sessId = md5(userObj.hash + new Date().getTime())
-        sessionUser[sessId] = username
+        //sessionUser[sessId] = username
+        //TODO: Decide if we want to store full user object here or not
+        redis.hmset(sessId, {username: username})
         res.cookie('sessionId', sessId, {maxAge: 3600*1000, httpOnly: true})
         res.send({username, result: 'success'})
     })
@@ -152,14 +157,23 @@ const isLoggedIn = (req, res, next) => {
         res.sendStatus(401)
         return
     }
-    req.user = sessionUser[sessionId]
-    if(!req.user){
-        console.log("Error: Sessionid invalid")
-        res.sendStatus(401)
-        return
-    }
-    console.log("From sessid, mapping, found user: ", req.user)
-    return next()
+    //Try to find user based off of sessionId, stored in redis
+    //req.user = sessionUser[sessionId]
+    redis.hgetall(sessionId, function(err, userObj) {
+        console.log("In redis get callback...\n")
+        console.log(sessionId + ' is mapped to ' + userObj)
+
+        //If no valid mapping, this isn't a valid sessionid
+        if(!userObj){
+            console.log("Error: Sessionid invalid")
+            res.sendStatus(401)
+            return
+        }
+        //Otherwise, it is, set req.user
+        req.user = userObj.username
+        console.log("From sessid, mapping, found user: ", req.user)
+        return next()
+    })
 }
 
 const password = (req, res) => {
@@ -180,10 +194,15 @@ const password = (req, res) => {
 }
 
 const logout = (req, res) => {
-    // Remove sessId
-    delete sessionUser[req.cookies["sessionId"]]
-    res.clearCookie("sessionId")
-    res.sendStatus(200)
+    // Remove sessId if exists
+    if(req.cookies["sessionId"]){
+        //delete sessionUser[req.cookies["sessionId"]]
+        redis.del(req.cookies["sessionId"], (err, reply) => {
+            console.log("Deleting sessionid from redis mapping gave reply: ", reply)
+        })
+        res.clearCookie("sessionId")
+        res.sendStatus(200)
+    }
 }
 
 const successMessage = (req, res) => {
