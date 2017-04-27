@@ -7,6 +7,9 @@ const passport = require('passport')
 const FacebookStrategy = require('passport-facebook').Strategy
 const config = require('./oath_config')
 const session = require('express-session')
+const jwt = require('jsonwebtoken')
+//TODO: Probably not how secret should work, generate randomly each time?
+const secret = 'LongSecretIDKWhatThisIs'
 
 if (!process.env.REDIS_URL) {
     process.env.REDIS_URL = 'redis://h:p95b741787cbc4e51ee4dc7e954ace749586ef80db996c801d7557ab814d1fc99@ec2-34-206-56-140.compute-1.amazonaws.com:34789'
@@ -27,22 +30,47 @@ const redis = require('redis').createClient(process.env.REDIS_URL)
 
 let users = []
 passport.serializeUser((user, done) => {
-    //I think: log user in?
-    //Actually, I think user is their token/auth, we need to store it?
+    /*
     console.log("Called ser?  User? ", user)
-    users[user.id] = user
-    done(null, user.id)
+    console.log("Email alone?: ", user.email)
+    console.log("Provider? ", user.provider)
+    //Now just getting token instead, idk...
+    */
+    const session = user.id
+    const email = user.emails[0].value
+    const username = email
+    
+    users[session] = username
+    //This route: If it's acceptable just to send them a cookie (inclass),
+    //let's just do it like we did for normal login.  Would need to change strategy back
+    
+    // TODO In order to work: If email as username + auth=provider constitutes a new pair in database, add user entries for this person
+
+    
+    done(null, session)
 })
 passport.deserializeUser((id, done) => {
-    //I think: log user out?
-    console.log("Called deser?  User? ", id)
+    // I think we should fetch user info from database, done sets req.user
+    console.log("Called deser?  id? ", id)
+    //TODO: Fetch from users db, not users (or not, since we don't use full obj anyways...)
     const user = users[id]
+    console.log("Actual user? ")
     done(null, user)
 })
 passport.use(new FacebookStrategy(config, (token, refreshToken, profile, done) => {
     console.log("Strategy being used?")
     process.nextTick(() => {
         console.log("In strategy func, profile? ", profile)
+        /*
+        const expiry = new Date()
+        expiry.setDate(expiry.getDate() + 1)
+        const jsonToken = jwt.sign({
+            token: token,
+            profile: profile,
+            exp: parseInt(expiry.getTime() / 1000)
+        }, secret)
+        return done(null, jsonToken)
+        */
         return done(null, profile)
     })
 }))
@@ -102,7 +130,7 @@ const register = (req, res) => {
 
      //Store user info in db
      new Following({username, following: []}).save()
-     new UsersPasswordInfo({username, salt, hash}).save()
+     new UsersPasswordInfo({username, salt, hash, auth: ''}).save()
      new UsersInfo({username, avatar: req.body.avatar, dob: req.body.dob, zipcode: req.body.zipcode, email: req.body.email, headline: 'Default Headline'}).save()
      
      res.send('ok\n')
@@ -146,8 +174,17 @@ const login = (req, res) => {
 }
 
 const isLoggedIn = (req, res, next) => {
+    console.log("Did we make it to isloggedin?", req.user)
+    console.log("---", req._passport)
     if(req.isAuthenticated()){
-        console.log("Checking authentication?")
+        console.log("User authenticated!")
+        console.log("In not profile, req.user: ", req.user)
+        //const decoded = jwt.verify(req.user, secret)
+        //const token = decoded.token
+        //const profile = decoded.profile
+        console.log("Req.user? ", profile)
+        next()
+        return
     }
     
     console.log(req.cookies)
@@ -217,7 +254,7 @@ const failMessage = (req, res) => {
 
 module.exports = {
     reg: (app) => {
-        app.use(session({secret: 'LongSecretIDKWhatThisIs'}))
+        app.use(session({secret}))
         app.use(passport.initialize())
         app.use(passport.session())
         
@@ -227,9 +264,9 @@ module.exports = {
         app.put('/logout', isLoggedIn, logout),
         app.put('/dropall', dropAllTables),
         app.put('/addSample', populateWSample),
-        app.get('/successMessage', successMessage)
+        app.get('/successMessage', isLoggedIn, successMessage)
         app.get('/failMessage', failMessage)
-        app.use('/login/facebook', passport.authenticate('facebook', { scope: 'email' }))
+        app.use('/login/facebook', passport.authenticate('facebook', { scope: ['email'] }))
         app.get('/fb/callback', passport.authenticate('facebook', { failureRedirect: '/failMessage', successRedirect: '/successMessage' }))
     },
     isLoggedIn: isLoggedIn

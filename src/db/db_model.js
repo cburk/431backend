@@ -15,7 +15,7 @@ var userInfoSchema = new mongoose.Schema({
     username: String, dob: Date, email: String, avatar: '', zipcode: Number, headline: String
 })
 var userPasswordSchema = new mongoose.Schema({
-    username: String, salt: String, hash: String
+    username: String, salt: String, hash: String, auth: String
 })
 
 exports.Article = mongoose.model('article', articleSchema)
