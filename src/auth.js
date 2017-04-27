@@ -28,68 +28,46 @@ const redis = require('redis').createClient(process.env.REDIS_URL)
 //TODO: Needs to be in final version
 //cjb6test	minerals-related-business
 // curl -H "Content-Type: application/json" -X POST -d '{"username":"cjb6test","password":"minerals-related-business"}' http://localhost:3000/register
+var UsersInfo = require('./db/db_model.js').UsersInfo
+var UsersPasswordInfo = require('./db/db_model.js').UsersPass
+var Following = require('./db/db_model.js').Following
+var Article = require('./db/db_model.js').Article
 
-
-let users = []
-passport.serializeUser((userToken, done) => {
-    //console.log("Called ser?  User? ", user)
-    //console.log("Email alone?: ", user.email)
-    //console.log("Provider? ", user.provider)
-    //Now just getting token instead, idk...
-    console.log("token? ", userToken)
-    const decoded = jwt.verify(userToken, secret)
-    const token = decoded.token
-    const profile = decoded.profile
-    console.log("Found profile? ", profile)
-    users[profile] = userToken
-    /*
+passport.serializeUser((user, done) => {
     const session = user.id
     const email = user.emails[0].value
     const username = email
-    */
     //users[session] = username
-    //This route: If it's acceptable just to send them a cookie (inclass),
-    //let's just do it like we did for normal login.  Would need to change strategy back
+    redis.hmset(session, {username: username, sessionId: session})
+    redis.hmset(username, {sessionId: session})
+    console.log("Session in serialize: ", session)
     
-    // TODO In order to work: If email as username + auth=provider constitutes a new pair in database, add user entries for this person
-
-    
-    done(null, profile)
+    UsersPasswordInfo.find({username: username}, (error, items) => {
+        console.log("Is fb/dob in here somewhere?", user)
+        if(items.length==0){
+            console.log("New oauth sign in")
+            // In order to work: If email as username + auth=provider constitutes a new pair in database, add user entries for this person
+            new UsersPasswordInfo({username, salt: null, hash: null, auth: 'facebook'}).save()
+            new Following({username, following: []}).save()
+            new UsersInfo({username, avatar: null, dob: null, zipcode: null, email: username, headline: 'Default Headline'}).save()
+        }
+        done(null, session)
+    })
 })
 passport.deserializeUser((id, done) => {
-    // I think we should fetch user info from database, done sets req.user
     console.log("Called deser?  id? ", id)
-    //TODO: Fetch from users db, not users (or not, since we don't use full obj anyways...)
-    const user = users[id]
-    console.log("Actual user (token)? ", user)
-    done(null, user)
+    redis.hgetall(id, function(err, userObj) {
+        done(null, userObj.username)
+    })
 })
 
 passport.use(new FacebookStrategy(config, (token, refreshToken, profile, done) => {
     console.log("Strategy being used?")
     process.nextTick(() => {
-        console.log("In strategy func, profile? ", profile)
-        
-        const expiry = new Date()
-        expiry.setDate(expiry.getDate() + 1)
-        const jsonToken = jwt.sign({
-            token: token,
-            profile: profile,
-            exp: parseInt(expiry.getTime() / 1000)
-        }, secret)
-        //localStorage.setItem('oathJWT', jsonToken)
-        //res.set('Authorization', 'Bearer ' + jsonToken)
-        console.log("Made token: ", jsonToken)
-        return done(null, jsonToken)
-        
-        //return done(null, profile)
+        return done(null, profile)
     })
 }))
 
-var UsersInfo = require('./db/db_model.js').UsersInfo
-var UsersPasswordInfo = require('./db/db_model.js').UsersPass
-var Following = require('./db/db_model.js').Following
-var Article = require('./db/db_model.js').Article
 const dropAllTables = (req, res) => {
     UsersInfo.remove({}, () => {console.log("Drop call received")})
     UsersPasswordInfo.remove({}, () => {console.log("Drop call received")})
@@ -173,7 +151,7 @@ const verifyUser = (username, password, res) => {
 }
 
 const login = (req, res) => {
-     console.log("login w/ object: ", req.body)
+    console.log("login w/ object: ", req.body)
 	const username = req.body.username
 	const password = req.body.password
 	if(!password || !username){
@@ -248,16 +226,26 @@ const logout = (req, res) => {
         redis.del(req.cookies["sessionId"], (err, reply) => {
             console.log("Deleting sessionid from redis mapping gave reply: ", reply)
         })
+        //Also delete the mapping from uid=>session, only exists for oauth people
+        redis.del(req.user, (err, reply) => {
+            console.log("Deleting sessionid from redis mapping gave reply: ", reply)
+        })
         res.clearCookie("sessionId")
         res.sendStatus(200)
     }
 }
 
 const successMessage = (req, res) => {
-    console.log("\n\nGot to success\n\n", req.user)
-    res.setHeader('Authorization', 'Bearer ' + req.user)
-    //res.send({success: 'message'})
-    res.redirect(mainUrl)
+    console.log("\n\nGot to success, session id?\n\n", req.user)
+    console.log("Success still, what's req.session?", req.session)
+    console.log(req.session.passport)
+    console.log(req.passport)
+    redis.hgetall(req.user, function(err, userObj) {
+        console.log("Setting cookie for new oath user: ", req.user, " as: ", userObj.sessionId)
+        res.cookie('sessionId', userObj.sessionId, {maxAge: 3600*1000, httpOnly: true})
+        res.redirect(mainUrl)
+    })
+    //Set req.user to 
 }
 const failMessage = (req, res) => {
     console.log("Got to fail")

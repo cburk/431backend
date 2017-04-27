@@ -24,32 +24,35 @@ const putFollowing = (req, res) => {
     //Ensure requested user exists
     UsersInfo.find({username: req.params.user}).exec((err, items) => {
         if(items.length < 1){
+            console.log("Requested following user does not exist")
             res.sendStatus(404)
-            res.send("Error: requested user does not exist")
+            //res.send("Error: requested user does not exist")
             return
+        }else{
+            //Add user to list of logged in's followers
+            Following.findOneAndUpdate(
+                { username: req.user },
+                { $push: { following: req.params.user } },
+                (err, out) => {
+                    console.log("also in, ", err)
+                    console.log("In here, found out: ", out)
+                }
+            )
+
+            //Return new list
+            Following.find({ username: req.user }).exec((err, items) => {
+                res.send({username: req.user, following: items[0].following})
+            })
         }
     })
     
-    //Add user to list of logged in's followers
-    Following.findOneAndUpdate(
-        { username: req.user },
-        { $push: { following: req.params.user } },
-        (err, out) => {
-            console.log("also in, ", err)
-            console.log("In here, found out: ", out)
-        }
-    )
-    
-    //Return new list
-    Following.find({ username: req.user }).exec((err, items) => {
-        res.send({username: req.user, following: items[0].following})
-    })
 }
 
 const getFollowing = (req, res) => {
     console.log("A: ", req.params.user)
     console.log("B: ", req.user)
     const query = { username: (req.params.user ? req.params.user : req.user) }
+    console.log("Query is: ", query)
     Following.find(query).exec((err, items) => {    
         console.log("items: ", items)
         res.send({username: req.params.user, following: items[0].following})
