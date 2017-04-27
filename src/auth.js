@@ -29,40 +29,47 @@ const redis = require('redis').createClient(process.env.REDIS_URL)
 //cjb6test	minerals-related-business
 // curl -H "Content-Type: application/json" -X POST -d '{"username":"cjb6test","password":"minerals-related-business"}' http://localhost:3000/register
 
+
 let users = []
-passport.serializeUser((user, done) => {
-    /*
-    console.log("Called ser?  User? ", user)
-    console.log("Email alone?: ", user.email)
-    console.log("Provider? ", user.provider)
+passport.serializeUser((userToken, done) => {
+    //console.log("Called ser?  User? ", user)
+    //console.log("Email alone?: ", user.email)
+    //console.log("Provider? ", user.provider)
     //Now just getting token instead, idk...
-    */
+    console.log("token? ", userToken)
+    const decoded = jwt.verify(userToken, secret)
+    const token = decoded.token
+    const profile = decoded.profile
+    console.log("Found profile? ", profile)
+    users[profile] = userToken
+    /*
     const session = user.id
     const email = user.emails[0].value
     const username = email
-    
-    users[session] = username
+    */
+    //users[session] = username
     //This route: If it's acceptable just to send them a cookie (inclass),
     //let's just do it like we did for normal login.  Would need to change strategy back
     
     // TODO In order to work: If email as username + auth=provider constitutes a new pair in database, add user entries for this person
 
     
-    done(null, session)
+    done(null, profile)
 })
 passport.deserializeUser((id, done) => {
     // I think we should fetch user info from database, done sets req.user
     console.log("Called deser?  id? ", id)
     //TODO: Fetch from users db, not users (or not, since we don't use full obj anyways...)
     const user = users[id]
-    console.log("Actual user? ")
+    console.log("Actual user (token)? ", user)
     done(null, user)
 })
+
 passport.use(new FacebookStrategy(config, (token, refreshToken, profile, done) => {
     console.log("Strategy being used?")
     process.nextTick(() => {
         console.log("In strategy func, profile? ", profile)
-        /*
+        
         const expiry = new Date()
         expiry.setDate(expiry.getDate() + 1)
         const jsonToken = jwt.sign({
@@ -70,9 +77,12 @@ passport.use(new FacebookStrategy(config, (token, refreshToken, profile, done) =
             profile: profile,
             exp: parseInt(expiry.getTime() / 1000)
         }, secret)
+        //localStorage.setItem('oathJWT', jsonToken)
+        //res.set('Authorization', 'Bearer ' + jsonToken)
+        console.log("Made token: ", jsonToken)
         return done(null, jsonToken)
-        */
-        return done(null, profile)
+        
+        //return done(null, profile)
     })
 }))
 
@@ -244,7 +254,8 @@ const logout = (req, res) => {
 }
 
 const successMessage = (req, res) => {
-    console.log("Got to success")
+    console.log("\n\nGot to success\n\n", req.user)
+    res.setHeader('Authorization', 'Bearer ' + req.user)
     //res.send({success: 'message'})
     res.redirect(mainUrl)
 }
@@ -266,7 +277,7 @@ module.exports = {
         app.put('/logout', isLoggedIn, logout),
         app.put('/dropall', dropAllTables),
         app.put('/addSample', populateWSample),
-        app.get('/successMessage', isLoggedIn, successMessage)
+        app.get('/successMessage', successMessage)
         app.get('/failMessage', failMessage)
         app.use('/login/facebook', passport.authenticate('facebook', { scope: ['email'] }))
         app.get('/fb/callback', passport.authenticate('facebook', { failureRedirect: '/failMessage', successRedirect: '/successMessage' }))
