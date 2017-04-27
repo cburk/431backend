@@ -1,6 +1,8 @@
 const express = require('express')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
+const auth = require('./src/auth')
+console.log(auth)
 
 const index = (req, res) => {
      res.send({ hello: 'world' })
@@ -8,7 +10,8 @@ const index = (req, res) => {
 
 const enableCoors = (req, res, next) => {
     res.setHeader('Access-Control-Allow-Credentials','true')
-    res.setHeader('Access-Control-Allow-Origin', 'http://frontend-deployment-p7cjb6.surge.sh')
+    //res.setHeader('Access-Control-Allow-Origin', 'http://frontend-deployment-p7cjb6.surge.sh')
+    res.setHeader('Access-Control-Allow-Origin', auth.mainUrl)
     res.setHeader('Access-Control-Allow-Methods','GET, POST, PUT, DELETE, OPTIONS')
     res.setHeader('Access-Control-Allow-Headers','Authorization, Content-Type')
 	if(req.method == 'OPTIONS'){

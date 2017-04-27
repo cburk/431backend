@@ -10,6 +10,7 @@ const session = require('express-session')
 const jwt = require('jsonwebtoken')
 //TODO: Probably not how secret should work, generate randomly each time?
 const secret = 'LongSecretIDKWhatThisIs'
+const mainUrl = 'http://localhost:8080'
 
 if (!process.env.REDIS_URL) {
     process.env.REDIS_URL = 'redis://h:p95b741787cbc4e51ee4dc7e954ace749586ef80db996c801d7557ab814d1fc99@ec2-34-206-56-140.compute-1.amazonaws.com:34789'
@@ -182,7 +183,7 @@ const isLoggedIn = (req, res, next) => {
         //const decoded = jwt.verify(req.user, secret)
         //const token = decoded.token
         //const profile = decoded.profile
-        console.log("Req.user? ", profile)
+        //console.log("Req.user? ", profile)
         next()
         return
     }
@@ -244,7 +245,8 @@ const logout = (req, res) => {
 
 const successMessage = (req, res) => {
     console.log("Got to success")
-    res.send({success: 'message'})
+    //res.send({success: 'message'})
+    res.redirect(mainUrl)
 }
 const failMessage = (req, res) => {
     console.log("Got to fail")
@@ -269,5 +271,6 @@ module.exports = {
         app.use('/login/facebook', passport.authenticate('facebook', { scope: ['email'] }))
         app.get('/fb/callback', passport.authenticate('facebook', { failureRedirect: '/failMessage', successRedirect: '/successMessage' }))
     },
-    isLoggedIn: isLoggedIn
+    isLoggedIn: isLoggedIn,
+    mainUrl: mainUrl
 }
