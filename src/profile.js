@@ -11,7 +11,6 @@ const loggedInProfile = {
 //Test register json, no dob
 //{"username": "new-user", "password": "pwd", "zipcode": 12312, "email": "e@mai.l"}
 
-
 //curl -H "Content-Type: application/json" -X PUT -d '{"headline":"headline now"}' http://localhost:3000/headline
 //curl -H "Content-Type: application/json" -X POST -d '{"username": "Christian-Hardcoded", "password": "p1", "email": "asdf@asd.f", "zipcode": 12345, "dob": "Mon Apr 17 2017 21:40:37 GMT-0500 (CDT)"}' http://localhost:3000/register
 //curl -H "Content-Type: application/json" http://localhost:3000/headlines
@@ -104,42 +103,36 @@ const putZip = (req, res) => {
     res.send(newZip)
 }
 
-const avatarsF = (req, res) => {
+const getAvatars = (req, res) => {
 	const users = req.params.user ? req.params.user.split(',') : [req.user]
     console.log("Users before: ", users)
 	if(users[users.length - 1]==''){
         users.pop()
     }
     console.log("Users after: ", users)
-    
-    //Current correct behavior: If user not logged in user, return a generic response
-    //Otherwise, return current user's headline
-    const usersAvatars = users.map((usr) => {return usr==req.user ? {username: usr, avatar: 'Generic Avatar'} 
-    : {username: usr, avatar: 'Generic Avatar'}})
 
-	//console.log(usersAvatars)
-	//res.send({avatars: usersAvatars})
-    //TODO: Fix later, for now, just returns this stub:
-    res.send({avatars: users.map((usr) => {return {username: usr, avatar: ''}})})
-}
-
-const avatarF = (req, res) => {
-    const users = req.params.user ? req.params.user.split(',') : [req.user]
-	if(users[users.length - 1]==''){
-        users.pop()
-    }
-    
     UsersInfo.find({
         username: { $in: users }
     }).exec((err, items) => {
-        res.send({headlines: items.map((userInfo) => {return {username: userInfo.username, headline: userInfo.headline}})})
-    })    
+        console.log("Server found these avatars: ", items)
+        res.send({avatars: items.map((userInfo) => {return {username: userInfo.username, avatar: userInfo.avatar}})})
+    })
+}
+
+//Put avatar
+const uploadImage = require('./cloudinary_ex')
+const putAvatar = (req, res) => {
+    //Middleware should have already uploaded file for us
     
-    let newAvatar = req.body
-    newAvatar.username = req.user
+    const newAvatarUrl = req.fileurl
+    console.log("Successfully uploaded? New url: ", newAvatarUrl)
     
-    //TODO: Actually do this later
-    //loggedInProfile.avatar = newAvatar.avatar
+    let newAvatar = {avatar: newAvatarUrl, username: req.user}
+    UsersInfo.findOneAndUpdate({username: newAvatar.username}, {avatar: newAvatar.avatar}, (err, items) => {
+        //TODO: Maybe some error checking?  items isn't useful, just gives us matching pre-update userinfo
+        //console.log("Update correctly? ", items)
+    })
+
     res.send(newAvatar)
 }
 
@@ -155,7 +148,7 @@ module.exports = (app) => {
 	app.get('/email/:user?', isLoggedIn, getEmail),
 	app.get('/zipcode/:user?', isLoggedIn, getZip),
 	app.put('/zipcode', isLoggedIn, putZip),
-	app.get('/avatars/:user?', isLoggedIn, avatarsF),
-	app.put('/avatar', isLoggedIn, avatarF),
+	app.get('/avatars/:user?', isLoggedIn, getAvatars),
+	app.put('/avatar', isLoggedIn, uploadImage('avatar'), putAvatar),
 	app.get('/dob', isLoggedIn, dob)
 }

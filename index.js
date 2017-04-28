@@ -2,7 +2,11 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const auth = require('./src/auth')
-console.log(auth)
+
+const passport = require('passport')
+const FacebookStrategy = require('passport-facebook').Strategy
+const session = require('express-session')
+
 
 const index = (req, res) => {
      res.send({ hello: 'world' })
@@ -22,6 +26,9 @@ const enableCoors = (req, res, next) => {
 }
 
 const app = express()
+app.use(session({secret: 'asdfsecret'}))
+app.use(passport.initialize())
+app.use(passport.session())
 app.use(enableCoors)
 app.use(bodyParser.json())
 app.use(cookieParser())

@@ -172,8 +172,7 @@ const isLoggedIn = (req, res, next) => {
         //const token = decoded.token
         //const profile = decoded.profile
         //console.log("Req.user? ", profile)
-        next()
-        return
+        return next()
     }
     
     console.log(req.cookies)
@@ -220,6 +219,7 @@ const password = (req, res) => {
 }
 
 const logout = (req, res) => {
+    console.log("Tried logging out")
     // Remove sessId if exists
     if(req.cookies["sessionId"]){
         //delete sessionUser[req.cookies["sessionId"]]
@@ -232,6 +232,13 @@ const logout = (req, res) => {
         })
         res.clearCookie("sessionId")
         res.sendStatus(200)
+    }else{
+        console.log("Oauth logout")
+        console.log(req.session)
+        req.session.destroy(() => {
+            res.sendStatus(200)
+        })
+        //res.redirect(mainUrl)
     }
 }
 
@@ -242,7 +249,10 @@ const successMessage = (req, res) => {
     console.log(req.passport)
     redis.hgetall(req.user, function(err, userObj) {
         console.log("Setting cookie for new oath user: ", req.user, " as: ", userObj.sessionId)
-        res.cookie('sessionId', userObj.sessionId, {maxAge: 3600*1000, httpOnly: true})
+        
+        //res.cookie('sessionId', userObj.sessionId, {maxAge: 3600*1000, httpOnly: true})
+        //res.send(req.user)
+        //res.send(req.session)
         res.redirect(mainUrl)
     })
     //Set req.user to 
@@ -254,11 +264,7 @@ const failMessage = (req, res) => {
 
 
 module.exports = {
-    reg: (app) => {
-        app.use(session({secret}))
-        app.use(passport.initialize())
-        app.use(passport.session())
-        
+    reg: (app) => {        
         app.post('/register', register),
         app.post('/login', login),
         app.put('/password', isLoggedIn, password),
