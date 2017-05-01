@@ -68,16 +68,43 @@ const putArticle = (req, res) => {
     })    
 }
 
+var Following = require('./db/db_model.js').Following
 const getArticles = (req, res) => {
-    /* As per spec:
-    There is NO requirement on the authors of the articles returned to the frontend. I.e., GET /articles can return all the articles in the database for this assignment.
-    
-    As a result, just returning all articles
-    */
-    
-    Article.find({}).exec((err, articles) => {
+    const callback = (err, articles) => {
+        console.log("Errors? ", err)
+        console.log("Found any articles? ", articles)
         res.send({articles: articles})
-    })
+    }
+
+    if(req.params.id){
+        //If ID specified, find if it's giving an art id or author
+        const query = (parseInt(req.params.id) ? {_id: req.params.id} : {author: req.params.id})
+        console.log("Query: ", query)
+        console.log("Req.p.id: ", req.params.id)
+        Article.
+            find(query).
+            exec(callback)
+        return
+    }
+    
+    
+    //Otherwise, get username + people being followed
+    Following.
+        find({username: req.user}).
+        exec((err, items) => {
+            console.log("following: ", items)
+            const users = [req.user].concat(items[0].following)
+            console.log("Full user list: ", users)
+            
+            // Find the first 10 articles, send back
+            Article.
+                find({
+                    author: { $in: users } 
+                }).
+                limit(10).
+                sort({ date: -1 }).
+                exec(callback)
+        })
 }
 
 const isLoggedIn = require('./auth').isLoggedIn
