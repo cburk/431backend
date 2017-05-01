@@ -2,10 +2,15 @@ const express = require('express')
 const bodyParser = require('body-parser')
 
 Article = require('./db/db_model').Article
+const uploadImage = require('./cloudinary_ex')
 const postArticle = (req, res) => {
+    //If an image was included, upload it
+    const imgUrl = req.fileurl
+    console.log("Got here? image? ", imgUrl)
+    
     //Get number of articles to find new id
     Article.find({}).exec((err, articles) => {
-        const contents = {_id: articles.length + 1, author: req.user, img: '', date: Date(), text: req.body.text, comments: []}
+        const contents = {_id: articles.length + 1, author: req.user, img: imgUrl ? imgUrl : '', date: Date(), text: req.body.text, comments: []}
         new Article(contents).save()
         res.send({articles: [contents]})
     })
@@ -77,7 +82,7 @@ const getArticles = (req, res) => {
 
 const isLoggedIn = require('./auth').isLoggedIn
 module.exports = app => {
-	app.post('/article', isLoggedIn, postArticle),
+	app.post('/article', isLoggedIn, uploadImage('article'), postArticle),
     app.put('/articles/:id', isLoggedIn, putArticle),
 	app.get('/articles/:id?', isLoggedIn, getArticles)
 }

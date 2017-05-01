@@ -35,16 +35,25 @@ const doUpload = (publicId, req, res, next) => {
 	// instead of saving locally, we keep the file in memory
 	// multer provides req.file and within that is the byte buffer
 
-	// we create a passthrough stream to pipe the buffer
-	// to the uploadStream function for cloudinary.
-    console.log("Was this used?")
-    console.log("Req: ", req)
-    console.log("File? ", req.file)
-	const s = new stream.PassThrough()
-	s.end(req.file.buffer)
-	s.pipe(uploadStream)
-	s.on('end', uploadStream.end)
-	// and the end of the buffer we tell cloudinary to end the upload.
+    //If there's no image/file to upload, do nothing
+    if(!req.file){
+        console.log("No image attached, skipping upload")
+        next()
+    }else{
+        // we create a passthrough stream to pipe the buffer
+        // to the uploadStream function for cloudinary.
+        console.log("Was this used?")
+        //console.log("Req: ", req)
+        console.log("File? ", req.file)
+        console.log(!req.file)
+        const s = new stream.PassThrough()
+        s.end(req.file.buffer)
+        s.pipe(uploadStream)
+        s.on('end', uploadStream.end)
+        // and the end of the buffer we tell cloudinary to end the upload.
+    }
+
+    
 }
 
 // multer parses multipart form data.  Here we tell

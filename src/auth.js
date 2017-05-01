@@ -80,17 +80,17 @@ const populateWSample = (req, res) => {
     const resStub = {send: () => {}}
     
     //Register 3 users, including cjb6test as required
-    register({body: {username: 'cjb6test', avatar: '', password: 'minerals-related-business', dob: Date(), zipcode: 12345, email: 'test@mail.com', headline: 'GEneric test headline'}}, resStub)
+    register({body: {username: 'cjb6test', avatar: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/DWLeebron.jpg/220px-DWLeebron.jpg', password: 'minerals-related-business', dob: Date(), zipcode: 12345, email: 'test@mail.com', headline: 'GEneric test headline'}}, resStub)
     
-    register({body: {username: 'cjb6', avatar: '', password: 'someone-task-concerned', dob: Date(), zipcode: 12321, email: 'cjb6@mail.com', headline: 'GEneric cjb headline'}}, resStub)
+    register({body: {username: 'cjb6', avatar: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/DWLeebron.jpg/220px-DWLeebron.jpg', password: 'someone-task-concerned', dob: Date(), zipcode: 12321, email: 'cjb6@mail.com', headline: 'GEneric cjb headline'}}, resStub)
     
-    register({body: {username: 'another-user', avatar: '',  password: 'a-pass-word', dob: Date(), zipcode: 81293, email: 'another@mail.com', headline: 'GEneric other headline'}}, resStub)
+    register({body: {username: 'another-user', avatar: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/DWLeebron.jpg/220px-DWLeebron.jpg',  password: 'a-pass-word', dob: Date(), zipcode: 81293, email: 'another@mail.com', headline: 'GEneric other headline'}}, resStub)
     
     //Add 10 articles, w/ 3 comments
-    new Article({_id: 1, author: 'cjb6', img: '', date: Date(), text: 'article 1 text', comments: [  ]}).save()
-    new Article({_id: 2, author: 'cjb6', img: '', date: Date(), text: 'article 2 text', comments: [  ]}).save()
-    new Article({_id: 3, author: 'cjb6test', img: '', date: Date(), text: 'article 3 text', comments: [  ]}).save()
-    new Article({_id: 4, author: 'cjb6', img: '', date: Date(), text: 'article 4 text', comments: [ 
+    new Article({_id: 1, author: 'cjb6', img: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/DWLeebron.jpg/220px-DWLeebron.jpg', date: Date(), text: 'article 1 text', comments: [  ]}).save()
+    new Article({_id: 2, author: 'cjb6', img: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/DWLeebron.jpg/220px-DWLeebron.jpg', date: Date(), text: 'article 2 text', comments: [  ]}).save()
+    new Article({_id: 3, author: 'cjb6test', img: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/DWLeebron.jpg/220px-DWLeebron.jpg', date: Date(), text: 'article 3 text', comments: [  ]}).save()
+    new Article({_id: 4, author: 'cjb6', img: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/DWLeebron.jpg/220px-DWLeebron.jpg', date: Date(), text: 'article 4 text', comments: [ 
         {commentId: 1, author: 'another-user', date: Date(), text: 'comment 1 text'},
         {commentId: 2, author: 'another-user', date: Date(), text: 'comment 2 text'}
     ]}).save()
