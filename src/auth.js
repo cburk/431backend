@@ -43,10 +43,10 @@ passport.serializeUser((user, done) => {
     console.log("Session in serialize: ", session)
     
     UsersPasswordInfo.
-        find({username: username}).
-        or({ auth: { $elemMatch: { username: username, authType: 'facebook' } } }).
+        find({ auth: { $elemMatch: { username: username, authType: 'facebook' } } }).
         exec((error, items) => {
             console.log("Is fb/dob in here somewhere?", user)
+            console.log(items)
             //If this person has registered already
             if(items.length==0){
                 console.log("New oauth sign in")
@@ -89,6 +89,8 @@ const populateWSample = (req, res) => {
     
     register({body: {username: 'another-user', avatar: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/DWLeebron.jpg/220px-DWLeebron.jpg',  password: 'a-pass-word', dob: Date(), zipcode: 81293, email: 'another@mail.com', headline: 'GEneric other headline'}}, resStub)
     
+    register({body: {username: 'another-user-2', avatar: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/DWLeebron.jpg/220px-DWLeebron.jpg',  password: 'a-pass-word', dob: Date(), zipcode: 81293, email: 'another2@mail.com', headline: 'GEneric different headline'}}, resStub)
+    
     //Add 10 articles, w/ 3 comments
     new Article({_id: 1, author: 'cjb6', img: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/DWLeebron.jpg/220px-DWLeebron.jpg', date: Date(), text: 'article 1 text', comments: [  ]}).save()
     new Article({_id: 2, author: 'cjb6', img: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/DWLeebron.jpg/220px-DWLeebron.jpg', date: Date(), text: 'article 2 text', comments: [  ]}).save()
@@ -97,6 +99,7 @@ const populateWSample = (req, res) => {
         {commentId: 1, author: 'another-user', date: Date(), text: 'comment 1 text'},
         {commentId: 2, author: 'another-user', date: Date(), text: 'comment 2 text'}
     ]}).save()
+    new Article({_id: 5, author: 'another-user-2', img: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/DWLeebron.jpg/220px-DWLeebron.jpg', date: Date(), text: 'article 5 text', comments: [  ]}).save()
     
     //Set up follower relationships for cjb6test
     const putFollowing = require('./following').putFollowing
@@ -128,6 +131,103 @@ const register = (req, res) => {
      res.send('ok\n')
 }
 
+const mergeUserInfo = (res, req, oauthUsername, linkedUsername) => {
+    //Delete oauth user's normal info
+    UsersInfo.findOne({username: oauthUsername}).remove((err, res) => {
+        if(err){
+            console.log("Error deleting oauth user info: ", err)
+        }else{
+            console.log("Deleted oauth user info successfully")
+        }
+    })
+
+    res.send({linkedUsername, result: 'success'})
+}
+
+const mergeArticleInfo = (res, req, oauthUsername, linkedUsername) => {
+    //Set author for oauth articles to be linked user
+    Article.
+        find({author: oauthUsername}).
+        exec((err, oauthUserArticles) => {
+            console.log("Oauth articles originally: ", oauthUserArticles)
+            oauthUserArticles.map((article) => {
+                const newComments = article.comments.map((comment) => {
+                    comment.author = linkedUsername
+                })
+                article.update({author: linkedUsername, comments: newComments}, {}, (err, res) => {
+                    console.log("Article merge performed successfully? ", err)
+                })
+            })
+            mergeUserInfo(res, req, oauthUsername, linkedUsername)
+        })
+}
+
+const mergeFollowingInfo = (res, req, oauthUsername, linkedUsername) => {
+    //Merge following info
+    Following.
+        findOne({username: linkedUsername}).
+        exec((err, linkedFollowingList) => {
+            console.log("Following list for linked user: ", linkedFollowingList)
+            Following.
+                findOne({username: oauthUsername}).
+                exec((err, oauthFollowingList) => {
+                    console.log("Merging with: ", oauthFollowingList)
+                    //Merge info into linked's list
+                    const followingMerger = {following: linkedFollowingList.following.concat(oauthFollowingList.following)}
+                    linkedFollowingList.update(followingMerger, {}, (err, raw) => {
+                        console.log("Errors? ", err)
+                    })
+                    //Delete oauth's list
+                    oauthFollowingList.remove((err, res) => {
+                        console.log("Errors? ", err)
+                    })
+                    mergeArticleInfo(res, req, oauthUsername, linkedUsername)
+                })
+        })    
+}
+
+const mergePasswordInfo = (res, req, oauthUsername, linkedUsername) => {
+    //Get the User Pwd Info (for newly logged in user) to update
+    UsersPasswordInfo.
+        findOne({username: linkedUsername}).
+        exec((err, thisUPI)=> {
+            console.log("Our UPI (one merged into): ", thisUPI)
+            UsersPasswordInfo.
+                findOne({username: oauthUsername}).
+                exec((err, oauthUPI) => {
+                    console.log("Merging w/: ", oauthUPI)
+                    //Merge oauth password info into this one's
+                    thisUPI.update({auth: thisUPI.auth.concat(oauthUPI.auth)}, 
+                        {}, 
+                       (err, raw) => {
+                            console.log("Merge successful?")
+                        })
+                    //Delete oauth password info
+                    oauthUPI.remove((err, res) => {
+                        console.log("Deleted oauth one successfully?")
+                    })
+                    mergeFollowingInfo(res, req, oauthUsername, linkedUsername)
+                })
+            
+        })
+}
+
+const linkAccounts = (res, req, username, password) => {
+    console.log("Trying to link accounts w/ user: ", req.user)
+    //Links w/ currently logged in oauth account
+    if(!req.user){
+        console.log("Couldn't link, not logged in (Throw error?)")
+        res.send({username, result: 'success'})
+        return
+    }else{
+        const oauthUsername = req.user
+        const linkedUsername = username
+        
+        mergePasswordInfo(res, req, oauthUsername, linkedUsername)
+    }
+
+}
+
 const verifyUser = (username, password, res, req) => {
     UsersPasswordInfo.find({username: username}, (error, items) => {
         console.log("Users password query returned: ", items)
@@ -152,38 +252,11 @@ const verifyUser = (username, password, res, req) => {
         
         //If this was part of a request to link accounts, do so
         if(req.body.linkActs){
-            console.log("Trying to link accounts w/ user: ", req.user)
-            //Links w/ currently logged in oauth account
-            if(!req.user){
-                console.log("Couldn't link, not logged in (Throw error?)")
-                res.send({username, result: 'success'})
-                return
-            }else{
-                //Get the User Pwd Info to update
-                UsersPasswordInfo.
-                    findOne({username: username}).
-                    exec((err, thisUPI)=> {
-                        console.log("Our UPI (one merged into): ", thisUPI)
-                        UsersPasswordInfo.
-                            findOne({username: req.user}).
-                            exec((err, oauthUPI) => {
-                                console.log("Merging w/: ", oauthUPI)
-                                //Merge oauth password info into this one's
-                                thisUPI.update({auth: thisUPI.auth.concat(oauthUPI.auth)}, 
-                                    {}, 
-                                   (err, raw) => {
-                                        console.log("Merge successful?")
-                                    })
-                                //Delete oauth password info
-                                oauthUPI.remove((err, res) => {
-                                    console.log("Deleted oauth one successfully?")
-                                })
-                            })
-                    })
-            }
+            linkAccounts(res, req, username, password)
+        }else{
+            res.send({username, result: 'success'})
         }
         
-        res.send({username, result: 'success'})
     })
 }
 
@@ -209,36 +282,57 @@ const isLoggedIn = (req, res, next) => {
         //const token = decoded.token
         //const profile = decoded.profile
         //console.log("Req.user? ", profile)
-        req.loggedInWith='OAUTH'
         
-        return next()
-    }
-    
-    console.log(req.cookies)
-    const sessionId = req.cookies['sessionId']
-    if(!sessionId){
-        console.log("Error: User not logged in")
-        res.sendStatus(401)
-        return
-    }
-    //Try to find user based off of sessionId, stored in redis
-    //req.user = sessionUser[sessionId]
-    redis.hgetall(sessionId, function(err, userObj) {
-        console.log("In redis get callback...\n")
-        console.log(sessionId + ' is mapped to ' + userObj)
-
-        //If no valid mapping, this isn't a valid sessionid
-        if(!userObj){
-            console.log("Error: Sessionid invalid")
+        //Check db, see if this account is linked already
+        UsersPasswordInfo.
+            findOne({ auth: { $elemMatch: { username: req.user, authType: 'facebook' } } }).
+            exec((err, thisUPI)=> {
+                if(thisUPI.auth.length > 1){
+                    req.loggedInWith='LINKED'
+                }else{
+                    req.loggedInWith='OAUTH'
+                }
+                req.user = thisUPI.username
+                console.log("Although oauth should have said @.edu, setting req.user as: ", req.user)
+                return next()
+            })
+    }else{
+        console.log(req.cookies)
+        const sessionId = req.cookies['sessionId']
+        if(!sessionId){
+            console.log("Error: User not logged in")
             res.sendStatus(401)
             return
         }
-        //Otherwise, it is, set req.user
-        req.loggedInWith='PASSWORD'
-        req.user = userObj.username
-        console.log("From sessid, mapping, found user: ", req.user)
-        return next()
-    })
+        //Try to find user based off of sessionId, stored in redis
+        //req.user = sessionUser[sessionId]
+        redis.hgetall(sessionId, function(err, userObj) {
+            console.log("In redis get callback...\n")
+            console.log(sessionId + ' is mapped to ' + userObj)
+
+            //If no valid mapping, this isn't a valid sessionid
+            if(!userObj){
+                console.log("Error: Sessionid invalid")
+                res.sendStatus(401)
+                return
+            }
+            //Otherwise, it is, set req.user
+            req.loggedInWith='PASSWORD'
+            req.user = userObj.username
+            console.log("From sessid, mapping, found user: ", req.user)
+            //Find out what we're logged in using, said to be linked account if multiple options
+            UsersPasswordInfo.
+                findOne({username: req.user}).
+                exec((err, thisUPI)=> {
+                    if(thisUPI.auth.length > 1){
+                        req.loggedInWith='LINKED'
+                    }else{
+                        req.loggedInWith='PASSWORD'
+                    }
+                    return next()
+                })
+        })
+    }
 }
 
 const password = (req, res) => {
@@ -286,6 +380,17 @@ const logout = (req, res) => {
 const printAll = (req, res) => {
     UsersPasswordInfo.find({}).exec((err, res) => {
         console.log("All User Password Info: ", res)
+        res.map((r) => {
+            console.log("User: ", r.username)
+            r.auth.map((a) => {
+                console.log("authType: ", a.authType)
+                console.log("username: ", a.username)
+            })
+        })
+    })
+    Article.find({}).exec((err, res) => {
+        console.log("Articles: ")
+        console.log(res)
     })
     res.sendStatus(200)
 }
