@@ -14,8 +14,11 @@ var followingsSchema = new mongoose.Schema({
 var userInfoSchema = new mongoose.Schema({
     username: String, dob: Date, email: String, avatar: '', zipcode: Number, headline: String
 })
+var authPair = new mongoose.Schema({
+    authType: String, username: String
+})
 var userPasswordSchema = new mongoose.Schema({
-    username: String, salt: String, hash: String, auth: String
+    username: String, salt: String, hash: String, auth: [authPair]
 })
 
 exports.Article = mongoose.model('article', articleSchema)

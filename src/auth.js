@@ -42,14 +42,17 @@ passport.serializeUser((user, done) => {
     redis.hmset(username, {sessionId: session})
     console.log("Session in serialize: ", session)
     
-    UsersPasswordInfo.find({username: username}, (error, items) => {
-        console.log("Is fb/dob in here somewhere?", user)
-        if(items.length==0){
-            console.log("New oauth sign in")
-            // In order to work: If email as username + auth=provider constitutes a new pair in database, add user entries for this person
-            new UsersPasswordInfo({username, salt: null, hash: null, auth: 'facebook'}).save()
-            new Following({username, following: []}).save()
-            new UsersInfo({username, avatar: null, dob: null, zipcode: null, email: username, headline: 'Default Headline'}).save()
+    UsersPasswordInfo.
+        find({username: username}).
+        or({ auth: { $elemMatch: { username: username, authType: 'facebook' } } }).
+        exec((error, items) => {
+            console.log("Is fb/dob in here somewhere?", user)
+            //If this person has registered already
+            if(items.length==0){
+                console.log("New oauth sign in")
+                new UsersPasswordInfo({username, salt: null, hash: null, auth: [{authType: 'facebook', username: username}]}).save()
+                new Following({username, following: []}).save()
+                new UsersInfo({username, avatar: null, dob: null, zipcode: null, email: username, headline: 'Default Headline'}).save()
         }
         done(null, session)
     })
@@ -119,13 +122,13 @@ const register = (req, res) => {
 
      //Store user info in db
      new Following({username, following: []}).save()
-     new UsersPasswordInfo({username, salt, hash, auth: ''}).save()
-     new UsersInfo({username, avatar: req.body.avatar, dob: req.body.dob, zipcode: req.body.zipcode, email: req.body.email, headline: 'Default Headline'}).save()
+     new UsersPasswordInfo({username, salt, hash, auth: [{authType: 'ricebook', username: username}]}).save()
+     new UsersInfo({username, avatar: req.body.avatar, dob: req.body.dob, zipcode: req.body.zipcode, email: req.body.email, headline: 'Default Headline', }).save()
      
      res.send('ok\n')
 }
 
-const verifyUser = (username, password, res) => {
+const verifyUser = (username, password, res, req) => {
     UsersPasswordInfo.find({username: username}, (error, items) => {
         console.log("Users password query returned: ", items)
         const userObj = items[0]
@@ -146,6 +149,40 @@ const verifyUser = (username, password, res) => {
         //TODO: Decide if we want to store full user object here or not
         redis.hmset(sessId, {username: username})
         res.cookie('sessionId', sessId, {maxAge: 3600*1000, httpOnly: true})
+        
+        //If this was part of a request to link accounts, do so
+        if(req.body.linkActs){
+            console.log("Trying to link accounts w/ user: ", req.user)
+            //Links w/ currently logged in oauth account
+            if(!req.user){
+                console.log("Couldn't link, not logged in (Throw error?)")
+                res.send({username, result: 'success'})
+                return
+            }else{
+                //Get the User Pwd Info to update
+                UsersPasswordInfo.
+                    findOne({username: username}).
+                    exec((err, thisUPI)=> {
+                        console.log("Our UPI (one merged into): ", thisUPI)
+                        UsersPasswordInfo.
+                            findOne({username: req.user}).
+                            exec((err, oauthUPI) => {
+                                console.log("Merging w/: ", oauthUPI)
+                                //Merge oauth password info into this one's
+                                thisUPI.update({auth: thisUPI.auth.concat(oauthUPI.auth)}, 
+                                    {}, 
+                                   (err, raw) => {
+                                        console.log("Merge successful?")
+                                    })
+                                //Delete oauth password info
+                                oauthUPI.remove((err, res) => {
+                                    console.log("Deleted oauth one successfully?")
+                                })
+                            })
+                    })
+            }
+        }
+        
         res.send({username, result: 'success'})
     })
 }
@@ -159,7 +196,7 @@ const login = (req, res) => {
 		return
 	}
 	//const userObj = uRecords[username]
-	verifyUser(username, password, res)
+	verifyUser(username, password, res, req)
 }
 
 const isLoggedIn = (req, res, next) => {
@@ -172,6 +209,8 @@ const isLoggedIn = (req, res, next) => {
         //const token = decoded.token
         //const profile = decoded.profile
         //console.log("Req.user? ", profile)
+        req.loggedInWith='OAUTH'
+        
         return next()
     }
     
@@ -195,6 +234,7 @@ const isLoggedIn = (req, res, next) => {
             return
         }
         //Otherwise, it is, set req.user
+        req.loggedInWith='PASSWORD'
         req.user = userObj.username
         console.log("From sessid, mapping, found user: ", req.user)
         return next()
@@ -242,6 +282,14 @@ const logout = (req, res) => {
     }
 }
 
+//Function to just print out contents of db
+const printAll = (req, res) => {
+    UsersPasswordInfo.find({}).exec((err, res) => {
+        console.log("All User Password Info: ", res)
+    })
+    res.sendStatus(200)
+}
+
 const successMessage = (req, res) => {
     console.log("\n\nGot to success, session id?\n\n", req.user)
     console.log("Success still, what's req.session?", req.session)
@@ -271,6 +319,7 @@ module.exports = {
         app.put('/logout', isLoggedIn, logout),
         app.put('/dropall', dropAllTables),
         app.put('/addSample', populateWSample),
+        app.get('/printAll', printAll),
         app.get('/successMessage', successMessage)
         app.get('/failMessage', failMessage)
         app.use('/login/facebook', passport.authenticate('facebook', { scope: ['email'] }))

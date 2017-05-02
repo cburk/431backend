@@ -62,7 +62,7 @@ const headline = (req, res) => {
 }
 
 /* Given a parameter to search for, returns a function for mongoose find that sends res that required user info (parameter) */
-const getParameterizedReturnFunction = (res, parameter) => (err, uiList) => {
+const getParameterizedReturnFunction = (res, parameter, req) => (err, uiList) => {
         if(uiList.length == 0){
             res.send('Error: user info not found')
             return
@@ -70,15 +70,15 @@ const getParameterizedReturnFunction = (res, parameter) => (err, uiList) => {
         const thisUserInfo = uiList[0]
         console.log("Found items: ", uiList)
         console.log(parameter)
-        res.send({username: thisUserInfo.username, [parameter]: thisUserInfo[parameter]})
+        res.send({username: thisUserInfo.username, [parameter]: thisUserInfo[parameter], loggedInWith: req.loggedInWith})
     }
 
 const getEmail = (req, res) => {
 	//If not mentioned, return email for logged in user
 	if(req.params.user==undefined){
-        UsersInfo.find({username: req.user}).exec(getParameterizedReturnFunction(res, 'email'))            
+        UsersInfo.find({username: req.user}).exec(getParameterizedReturnFunction(res, 'email', req))            
     }else{
-        UsersInfo.find({username: req.params.user}).exec(getParameterizedReturnFunction(res, 'email'))
+        UsersInfo.find({username: req.params.user}).exec(getParameterizedReturnFunction(res, 'email', req))
     }
 }
 
@@ -92,7 +92,7 @@ const putEmail = (req, res) => {
 }
 
 const getZip = (req, res) => {
-    UsersInfo.find({username: req.params.user ? req.params.user : req.user}).exec(getParameterizedReturnFunction(res, 'zipcode'))    
+    UsersInfo.find({username: req.params.user ? req.params.user : req.user}).exec(getParameterizedReturnFunction(res, 'zipcode', req))    
 }
 
 const putZip = (req, res) => {
@@ -137,7 +137,7 @@ const putAvatar = (req, res) => {
 }
 
 const dob = (req, res) => {
-    UsersInfo.find({username: req.user}).exec(getParameterizedReturnFunction(res, 'dob'))
+    UsersInfo.find({username: req.user}).exec(getParameterizedReturnFunction(res, 'dob', req))
 }
 
 const isLoggedIn = require('./auth').isLoggedIn
