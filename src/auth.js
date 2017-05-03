@@ -427,6 +427,20 @@ const failMessage = (req, res) => {
     res.send({fail: 'message'})
 }
 
+const unlinkAccounts = (req, res) => {
+    UsersPasswordInfo.
+        findOne({ auth: { $elemMatch: { username: req.user } } }).
+        exec((err, info) => {
+            info.update({auth: info.auth.filter((authPair) => {return authPair.authType != 'facebook'})}, {}, (err, result) => {
+                    console.log("Unlinking performed successfully? ", err)
+                    if(!err){
+                        res.send({result: 'success'})
+                    }else{
+                        res.send({result: 'error', errorMsg: err})
+                    }
+                })
+        })
+}
 
 module.exports = {
     reg: (app) => {        
@@ -439,6 +453,7 @@ module.exports = {
         app.get('/printAll', printAll),
         app.get('/successMessage', successMessage)
         app.get('/failMessage', failMessage)
+        app.post('/unlink', isLoggedIn, unlinkAccounts)
         app.use('/login/facebook', passport.authenticate('facebook', { scope: ['email'] }))
         app.get('/fb/callback', passport.authenticate('facebook', { failureRedirect: '/failMessage', successRedirect: '/successMessage' }))
     },
