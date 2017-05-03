@@ -223,6 +223,11 @@ const linkAccounts = (res, req, username, password) => {
         const oauthUsername = req.user
         const linkedUsername = username
         
+        //Log out the oauth user, leaving the "normal" user logged in
+        req.session.destroy(() => {
+        })
+        
+        //Merge accounts, serialized
         mergePasswordInfo(res, req, oauthUsername, linkedUsername)
     }
 
