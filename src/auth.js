@@ -254,7 +254,12 @@ const verifyUser = (username, password, res, req) => {
         if(req.body.linkActs){
             linkAccounts(res, req, username, password)
         }else{
-            res.send({username, result: 'success'})
+            //Otherwise, logged in successfully.  Note whether this is a linked account or not
+            if(userObj.auth.length > 1){
+                res.send({username, result: 'success', loggedInWith: 'LINKED'})                
+            }else{
+                res.send({username, result: 'success', loggedInWith: 'PASSWORD'})
+            }
         }
         
     })
@@ -324,7 +329,9 @@ const isLoggedIn = (req, res, next) => {
             UsersPasswordInfo.
                 findOne({username: req.user}).
                 exec((err, thisUPI)=> {
+                    console.log("thisUPI, what we got? ", thisUPI)
                     if(thisUPI.auth.length > 1){
+                        console.log("Linked path")
                         req.loggedInWith='LINKED'
                     }else{
                         req.loggedInWith='PASSWORD'
