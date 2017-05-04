@@ -1,6 +1,6 @@
-{ 
+{
      "netid": "cjb6",
-  "frontend": "http://frontend-deployment-p7cjb6.surge.sh/",
-   "backend": "https://cjb6project7take2.herokuapp.com"
+  "frontend": "kindhearted-cable.surge.sh",
+   "backend": "https://final-backend-att1.herokuapp.com/"
 }
 
