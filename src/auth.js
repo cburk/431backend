@@ -10,7 +10,8 @@ const session = require('express-session')
 const jwt = require('jsonwebtoken')
 //TODO: Probably not how secret should work, generate randomly each time?
 const secret = 'LongSecretIDKWhatThisIs'
-const mainUrl = 'http://localhost:8080'
+//const mainUrl = 'http://localhost:8080'
+const mainUrl = 'kindhearted-cable.surge.sh'
 
 if (!process.env.REDIS_URL) {
     process.env.REDIS_URL = 'redis://h:p95b741787cbc4e51ee4dc7e954ace749586ef80db996c801d7557ab814d1fc99@ec2-34-206-56-140.compute-1.amazonaws.com:34789'
